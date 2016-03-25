@@ -6,18 +6,23 @@ vmod_LTLIBRARIES = libvmod_unidirectors.la
 libvmod_unidirectors_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
 
 libvmod_unidirectors_la_SOURCES = \
-	vmod_unidirectors.c
+	udir.c \
+	udir.h \
+	fall_back.c \
+	hash.c \
+	random.c \
+	round_robin.c
 
 nodist_libvmod_unidirectors_la_SOURCES = \
 	vcc_if.c \
 	vcc_if.h
 
-vmod_unidirectors.lo: vcc_if.c vcc_if.h
+vmod_unidirectors.lo: vcc_if.h
 
-vcc_if.c: vcc_if.h
+vcc_if.h vmod_unidirectors.rst vmod_unidirectors.man.rst: vcc_if.c
 
-vcc_if.h: @VMODTOOL@ $(top_srcdir)/src/vmod_unidirectors.vcc
-	@VMODTOOL@ $(top_srcdir)/src/vmod_unidirectors.vcc
+vcc_if.c: @VMODTOOL@ $(top_srcdir)/src/vmod.vcc
+	@VMODTOOL@ $(top_srcdir)/src/vmod.vcc
 
 VMOD_TESTS = $(top_srcdir)/src/tests/*.vtc
 .PHONY: $(VMOD_TESTS)
@@ -28,7 +33,7 @@ $(top_srcdir)/src/tests/*.vtc: libvmod_unidirectors.la
 check: $(VMOD_TESTS)
 
 EXTRA_DIST = \
-	vmod_unidirectors.vcc \
+	vmod.vcc \
 	$(VMOD_TESTS)
 
 CLEANFILES = \
