@@ -1,0 +1,160 @@
+#-
+# Copyright (c) 2013-2015 Varnish Software AS
+# All rights reserved.
+#
+# Author: Poul-Henning Kamp <phk@FreeBSD.org>
+#
+# Copyright (c) 2016 GANDI SAS
+# All rights reserved.
+#
+# Author: Emmanuel Hocdet <manu@gandi.net>
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+$Module unidirectors 3 Varnish Directors Module
+
+DESCRIPTION
+===========
+
+`vmod_unidirectors` enables backend load balancing in Varnish.
+
+The module implements a set of basic load balancing techniques. It's
+based on vmod_directors. The major change is the unification of directors
+type.
+One of the goal is to mimic Varnish 3.0 functionality like to easly stack 
+hash director on fallback director.
+Only one director C-type is generated, more convenient to manipulate it 
+with inline C.
+
+To enable load balancing you must import this vmod (unidirectors).
+
+Then you define your backends. Once you have the backends declared you
+can add them to a director. This happens in executed VCL code. If you
+want to emulate the previous behavior of Varnish 3.0 you can just
+initialize the directors in vcl_init, like this::
+
+    sub vcl_init {
+	new udir2 = unidirectors.director();
+	udir2.round_robin();
+	udir2.add_backend(backend1);
+	udir2.add_backend(backend2);
+
+	new udir1 = unidirectors.director();
+	udir1.hash("client-identity");
+	udir1.add_backend(backendA);
+	udir1.add_backend(backendB);
+
+	new udir = unidirectors.director();
+	udir.fallback();
+	udir.add_backend(udir1.backend());
+	udir.add_backend(udir2.backend());
+    }
+
+As you can see there is nothing keeping you from manipulating the
+directors elsewhere in VCL. So, you could have VCL code that would
+add more backends to a director when a certain URL is called.
+
+$Object director()
+
+Description
+	Create a raw director.
+
+	You need to set a load balancing method before to use it.
+
+Example
+	new udir = unidirectors.director()
+
+$Method VOID .round_robin()
+
+Description
+	Configure a director as round robin.
+
+	This director will pick backends in a round robin fashion.
+
+Example
+	udir.round_robin();
+
+$Method VOID .fallback()
+
+Description
+	Configure a director as fallback.
+
+	A fallback director will try each of the added backends in turn,
+	and return the first one that is healthy.
+
+Example
+	udir.fallback();
+
+$Method VOID .random()
+
+Description
+	Configure a director as random.
+
+	The random director distributes load over the backends using
+	a weighted random probability distribution.
+
+Example
+	udir.random();
+
+$Method VOID .hash(STRING hdr="")
+
+Description
+	Configure a director as hash.
+
+	The director chooses the backend server by computing a hash/digest
+	of the http header in param.
+
+	Commonly used with ``client.ip`` or a session cookie to get
+	sticky sessions.
+
+Example
+	udir.hash("client-identity");
+	set req.http.client-identity = client.ip;
+
+$Method VOID .add_backend(BACKEND, REAL weight=1.0)
+
+Description
+	Add a backend to the director with an optional weight.
+
+	Weight is only relevent for some load balancing method.
+	1.0 is the defaut value.
+
+Example
+	udir.add_backend(backend1);
+	udir.add_backend(backend2, 2.0);
+
+$Method VOID .remove_backend(BACKEND)
+
+Description
+	Remove a backend from the director.
+Example
+	udir.remove_backend(backend1);
+	udir.remove_backend(backend2);
+
+$Method BACKEND .backend()
+
+Description
+	Pick a backend from the director.
+Example
+	set req.backend_hint = udir.backend();
+
+

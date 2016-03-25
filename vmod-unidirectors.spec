@@ -6,11 +6,11 @@ License: BSD
 Group: System Environment/Daemons
 Source0: libvmod-unidirectors.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Requires: varnish >= 4.0.2
+Requires: varnish >= 4.1.0
 BuildRequires: make
 BuildRequires: python-docutils
-BuildRequires: varnish >= 4.0.2
-BuildRequires: varnish-libs-devel >= 4.0.2
+BuildRequires: varnish >= 4.1.0
+BuildRequires: varnish-libs-devel >= 4.1.0
 
 %description
 Example VMOD

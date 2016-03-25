@@ -3,43 +3,213 @@ vmod_unidirectors
 ============
 
 ----------------------
-Varnish Example Module
+Varnish Directors Module
 ----------------------
 
-:Date: 2015-03-03
+:Date: 2016-03-25
 :Version: 1.0
+:Manual section: 3
+
+
+=================
+vmod_unidirectors
+=================
+
+------------------------
+Varnish Directors Module
+------------------------
+
 :Manual section: 3
 
 SYNOPSIS
 ========
 
-import unidirectors;
+import unidirectors [from "path"] ;
+
 
 DESCRIPTION
 ===========
 
-Example Varnish vmod demonstrating how to write an out-of-tree Varnish vmod.
+`vmod_unidirectors` enables backend load balancing in Varnish.
 
-Implements the traditional Hello World as a vmod.
+The module implements a set of basic load balancing techniques. It's
+based on vmod_directors. The major change is the unification of directors
+type.
+One of the goal is to mimic Varnish 3.0 functionality like to easly stack
+hash director on fallback director.
+Only one director C-type is generated, more convenient to manipulate it
+with inline C.
 
-FUNCTIONS
-=========
+To enable load balancing you must import this vmod (unidirectors).
 
-hello
------
+Then you define your backends. Once you have the backends declared you
+can add them to a director. This happens in executed VCL code. If you
+want to emulate the previous behavior of Varnish 3.0 you can just
+initialize the directors in vcl_init, like this::
+
+    sub vcl_init {
+	new udir2 = unidirectors.director();
+	udir2.round_robin();
+	udir2.add_backend(backend1);
+	udir2.add_backend(backend2);
+
+	new udir1 = unidirectors.director();
+	udir1.hash("client-identity");
+	udir1.add_backend(backendA);
+	udir1.add_backend(backendB);
+
+	new udir = unidirectors.director();
+	udir.fallback();
+	udir.add_backend(udir1.backend());
+	udir.add_backend(udir2.backend());
+    }
+
+As you can see there is nothing keeping you from manipulating the
+directors elsewhere in VCL. So, you could have VCL code that would
+add more backends to a director when a certain URL is called.
+
+CONTENTS
+========
+
+* :ref:`obj_director`
+* :ref:`func_director.add_backend`
+* :ref:`func_director.backend`
+* :ref:`func_director.fallback`
+* :ref:`func_director.hash`
+* :ref:`func_director.random`
+* :ref:`func_director.remove_backend`
+* :ref:`func_director.round_robin`
+
+.. _obj_director:
+
+Object director
+===============
+
+
+Description
+	Create a raw director.
+
+	You need to set a load balancing method before to use it.
+
+Example
+	new udir = unidirectors.director()
+
+.. _func_director.round_robin:
+
+VOID director.round_robin()
+---------------------------
 
 Prototype
-        ::
+	VOID director.round_robin()
 
-                hello(STRING S)
-Return value
-	STRING
 Description
-	Returns "Hello, " prepended to S
-Example
-        ::
+	Configure a director as round robin.
 
-                set resp.http.hello = unidirectors.hello("World");
+	This director will pick backends in a round robin fashion.
+
+Example
+	udir.round_robin();
+
+.. _func_director.fallback:
+
+VOID director.fallback()
+------------------------
+
+Prototype
+	VOID director.fallback()
+
+Description
+	Configure a director as fallback.
+
+	A fallback director will try each of the added backends in turn,
+	and return the first one that is healthy.
+
+Example
+	udir.fallback();
+
+.. _func_director.random:
+
+VOID director.random()
+----------------------
+
+Prototype
+	VOID director.random()
+
+Description
+	Configure a director as random.
+
+	The random director distributes load over the backends using
+	a weighted random probability distribution.
+
+Example
+	udir.random();
+
+.. _func_director.hash:
+
+VOID director.hash(STRING)
+--------------------------
+
+Prototype
+	VOID director.hash(STRING hdr)
+
+Description
+	Configure a director as hash.
+
+	The director chooses the backend server by computing a hash/digest
+	of the http header in param.
+
+	Commonly used with ``client.ip`` or a session cookie to get
+	sticky sessions.
+
+Example
+	udir.hash("client-identity");
+	set req.http.client-identity = client.ip;
+
+.. _func_director.add_backend:
+
+VOID director.add_backend(BACKEND, REAL)
+----------------------------------------
+
+Prototype
+	VOID director.add_backend(BACKEND, REAL weight)
+
+Description
+	Add a backend to the director with an optional weight.
+
+	Weight is only relevent for some load balancing method.
+	1.0 is the defaut value.
+
+Example
+	udir.add_backend(backend1);
+	udir.add_backend(backend2, 2.0);
+
+.. _func_director.remove_backend:
+
+VOID director.remove_backend(BACKEND)
+-------------------------------------
+
+Prototype
+	VOID director.remove_backend(BACKEND)
+
+Description
+	Remove a backend from the director.
+Example
+	udir.remove_backend(backend1);
+	udir.remove_backend(backend2);
+
+.. _func_director.backend:
+
+BACKEND director.backend()
+--------------------------
+
+Prototype
+	BACKEND director.backend()
+
+Description
+	Pick a backend from the director.
+Example
+	set req.backend_hint = udir.backend();
+
 
 INSTALLATION
 ============
@@ -87,17 +257,6 @@ Other files like man-pages and documentation are installed in the
 locations determined by ``configure``, which inherits its default
 ``--prefix`` setting from Varnish.
 
-USAGE EXAMPLE
-=============
-
-In your VCL you could then use this vmod along the following lines::
-
-        import unidirectors;
-
-        sub vcl_deliver {
-                # This sets resp.http.hello to "Hello, World"
-                set resp.http.hello = unidirectors.hello("World");
-        }
 
 COMMON PROBLEMS
 ===============
