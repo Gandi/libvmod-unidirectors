@@ -157,9 +157,11 @@ Description
 Example
 	set req.backend_hint = udir.backend();
 
-$Method BACKEND .search(IP)
+$Function BACKEND search_backend(BACKEND, IP)
 
 Description
 	Pick a backend matching the IP from the director.
 Example
-	set req.backend_hint = udir.search(client.ip);
+	set req.backend_hint = unidirectors.search(udir, client.ip);
+
+

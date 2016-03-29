@@ -1,9 +1,4 @@
 /*-
- * Copyright (c) 2013-2015 Varnish Software AS
- * All rights reserved.
- *
- * Author: Poul-Henning Kamp <phk@FreeBSD.org>
- *
  * Copyright (c) 2016 GANDI SAS
  * All rights reserved.
  *
@@ -33,47 +28,20 @@
 
 #include "config.h"
 
-#include <math.h>
 #include <stdlib.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
 #include "vrt.h"
-#include "vbm.h"
 
-#include "udir.h"
 
-#include "vcc_if.h"
-
-static const struct director * __match_proto__(vdi_resolve_f)
-vmod_random_resolve(const struct director *dir, struct worker *wrk,
-		    struct busyobj *bo)
+VCL_BACKEND __match_proto__()
+vmod_search_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 {
-	struct vmod_unidirectors_director *rr;
-	VCL_BACKEND be;
-	double r;
-
-	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
-	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
-	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
-	CAST_OBJ_NOTNULL(rr, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	r = scalbn(random(), -31);
-	assert(r >= 0 && r < 1.0);
-	be = udir_pick_be(rr, r, bo);
-	return (be);
-}
-
-VCL_VOID __match_proto__()
-vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
-{
-	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AZ(vd->priv);
-
-	vd->add_backend = udir_add_backend;
-	vd->dir->name = "random";
-	vd->dir->resolve = vmod_random_resolve;
-	vd->dir->healthy = udir_vdi_healthy;
-	vd->dir->search = udir_vdi_search;
+        CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+	if (be->search)
+	        return (be->search(be, sa));
+	return (NULL);
 }

@@ -75,7 +75,6 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->priv = vd;
 	AZ(vd->dir->healthy);
 	AZ(vd->dir->resolve);
-	vd->dir->search = udir_vdi_search;
 	vd->vbm = vbit_new(8);
 	AZ(vd->priv);
 	AN(vd->vbm);
@@ -305,12 +304,4 @@ vmod_director_backend(VRT_CTX, struct vmod_unidirectors_director *vd)
 	if (vd->pick_dir)
 	        return (vd->pick_dir(vd));
 	return (vd->dir);
-}
-
-VCL_BACKEND __match_proto__()
-vmod_director_search(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_IP sa)
-{
-        CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	return (udir_vdi_search(vd->dir, sa));
 }

@@ -139,4 +139,5 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 	vd->dir->name = "hash";
 	vd->dir->resolve = vmod_hash_resolve;
 	vd->dir->healthy = udir_vdi_healthy;
+	vd->dir->search = udir_vdi_search;
 }

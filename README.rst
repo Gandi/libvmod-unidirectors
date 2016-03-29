@@ -79,7 +79,7 @@ CONTENTS
 * :ref:`func_director.random`
 * :ref:`func_director.remove_backend`
 * :ref:`func_director.round_robin`
-* :ref:`func_director.search`
+* :ref:`func_search_backend`
 
 .. _obj_director:
 
@@ -211,18 +211,18 @@ Description
 Example
 	set req.backend_hint = udir.backend();
 
-.. _func_director.search:
+.. _func_search_backend:
 
-BACKEND director.search(IP)
----------------------------
+BACKEND search_backend(BACKEND, IP)
+-----------------------------------
 
 Prototype
-	BACKEND director.search(IP)
+	BACKEND search_backend(BACKEND, IP)
 
 Description
 	Pick a backend matching the IP from the director.
 Example
-	set req.backend_hint = udir.search(client.ip);
+	set req.backend_hint = unidirectors.search_backend(udir, client.ip);
 
 
 INSTALLATION
