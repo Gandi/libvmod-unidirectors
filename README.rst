@@ -79,6 +79,7 @@ CONTENTS
 * :ref:`func_director.random`
 * :ref:`func_director.remove_backend`
 * :ref:`func_director.round_robin`
+* :ref:`func_is_backend`
 * :ref:`func_search_backend`
 
 .. _obj_director:
@@ -222,7 +223,23 @@ Prototype
 Description
 	Pick a backend matching the IP from the director.
 Example
-	set req.backend_hint = unidirectors.search_backend(udir, client.ip);
+	set req.backend_hint = unidirectors.search_backend(udir.backend(), client.ip);
+
+.. _func_is_backend:
+
+BOOL is_backend(BACKEND)
+--------------------------
+
+Prototype
+	BOOL is_backend(BACKEND)
+
+Description
+	Test if we have a backend (healthy or not).
+	Useful to authorise the backends to PURGE itself.
+Exemple
+	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
+	    	return (synth(405));
+	}
 
 
 INSTALLATION
