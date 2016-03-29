@@ -75,7 +75,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->priv = vd;
 	AZ(vd->dir->healthy);
 	AZ(vd->dir->resolve);
-	vd->vbm = vbit_new(8);
+	vd->vbm = vbit_init(8);
 	AZ(vd->priv);
 	AN(vd->vbm);
 }
