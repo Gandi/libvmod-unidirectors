@@ -46,6 +46,7 @@ EOF
 	exit 1
 fi
 set -ex
+[ -d m4 ] || mkdir m4
 aclocal -I m4 -I ${dataroot}/aclocal
 $LIBTOOLIZE --copy --force
 autoheader

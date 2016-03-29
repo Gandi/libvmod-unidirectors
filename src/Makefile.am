@@ -22,8 +22,8 @@ vmod_unidirectors.lo: vcc_if.h
 
 vcc_if.h vmod_unidirectors.rst vmod_unidirectors.man.rst: vcc_if.c
 
-vcc_if.c: @VMODTOOL@ $(top_srcdir)/src/vmod.vcc
-	@VMODTOOL@ $(top_srcdir)/src/vmod.vcc
+vcc_if.c: @VMODTOOL@ $(top_srcdir)/src/vmod_unidirectors.vcc
+	@VMODTOOL@ $(top_srcdir)/src/vmod_unidirectors.vcc
 
 VMOD_TESTS = $(top_srcdir)/src/tests/*.vtc
 .PHONY: $(VMOD_TESTS)
@@ -34,7 +34,7 @@ $(top_srcdir)/src/tests/*.vtc: libvmod_unidirectors.la
 check: $(VMOD_TESTS)
 
 EXTRA_DIST = \
-	vmod.vcc \
+	vmod_unidirectors.vcc \
 	$(VMOD_TESTS)
 
 CLEANFILES = \
