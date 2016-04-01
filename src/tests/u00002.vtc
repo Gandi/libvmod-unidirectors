@@ -1,0 +1,40 @@
+varnishtest "Test is_backend"
+
+varnish v1  -vcl {
+	import unidirectors from "${vmod_topbuild}/src/.libs/libvmod_unidirectors.so";
+
+	backend default { .host = "127.0.0.8"; 
+			  .port = "8888"; 
+			  .probe = {
+                          	 .url = "/";
+                        	 .timeout = 30ms;
+                        	 .interval = 1s;
+                        	 .window = 2;
+                        	 .threshold = 1;
+                        	 .initial = 0;
+                        	 }
+			  }
+	sub vcl_init {
+		new udef = unidirectors.director();
+		udef.random();
+		udef.add_backend(default);
+	}
+	sub vcl_recv {
+	    	set req.backend_hint = udef.backend();
+	    	if (!unidirectors.is_backend(req.backend_hint)) {
+			return(synth(500));
+		}
+	}
+	sub vcl_backend_error {
+	    	if (!unidirectors.is_backend(beresp.backend)) {
+		   	set beresp.http.isbackend = "false";
+		}
+	}
+} -start
+
+client c1 {
+       txreq
+       rxresp
+       expect resp.status == 503
+       expect resp.http.isbackend == "false"
+} -run

@@ -1,4 +1,4 @@
-varnishtest "Test search_backend and is_backend"
+varnishtest "Test search_backend"
 
 varnish v1  -vcl {
 	import unidirectors from "${vmod_topbuild}/src/.libs/libvmod_unidirectors.so";
@@ -39,4 +39,3 @@ client c2 {
        rxresp
        expect resp.status == 405
 } -run
-
