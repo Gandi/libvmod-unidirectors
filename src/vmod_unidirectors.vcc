@@ -174,3 +174,9 @@ Exemple
 	    	return (synth(405));
 	}
 
+$Function STRING backend_type(BACKEND)
+
+Description
+	Return the type of the director.
+Exemple
+	set req.http.director = unidirectors.backend_type(req.backend_hint);

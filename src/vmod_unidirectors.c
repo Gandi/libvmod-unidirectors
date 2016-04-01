@@ -35,6 +35,13 @@
 
 #include "vrt.h"
 
+VCL_STRING __match_proto__()
+vmod_backend_type(VRT_CTX, VCL_BACKEND be)
+{
+        CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+	return (be->name);
+}
 
 VCL_BACKEND __match_proto__()
 vmod_search_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)

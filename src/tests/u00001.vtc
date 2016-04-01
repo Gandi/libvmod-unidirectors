@@ -1,0 +1,45 @@
+varnishtest "Test backend_type"
+
+varnish v1  -vcl {
+	import unidirectors from "${vmod_topbuild}/src/.libs/libvmod_unidirectors.so";
+
+	backend default { .host = "127.0.0.1"; .port = "80"; }
+
+	sub vcl_init {
+		new rawdir = unidirectors.director();
+		new hashdir = unidirectors.director();
+		hashdir.hash("req.http.Foo");
+		hashdir.add_backend(default);
+	}
+
+	sub vcl_recv {
+	    	if (req.http.Foo == "raw") {
+		        set req.backend_hint = rawdir.backend();
+		}
+		if (req.http.Foo == "hash") {
+		        set req.backend_hint = hashdir.backend();
+		}
+		if (req.http.Foo == unidirectors.backend_type(req.backend_hint)) {
+		        return(synth(200));
+		}
+		return(synth(500));
+	}
+} -start
+
+client c1 {
+       txreq -hdr "Foo: raw"
+       rxresp
+       expect resp.status == 200
+} -run
+
+client c2 {
+       txreq -hdr "Foo: hash"
+       rxresp
+       expect resp.status == 200
+} -run
+
+client c3 {
+       txreq -hdr "Foo: backend"
+       rxresp
+       expect resp.status == 200
+} -run

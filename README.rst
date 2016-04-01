@@ -71,6 +71,7 @@ add more backends to a director when a certain URL is called.
 CONTENTS
 ========
 
+* :ref:`func_backend_type`
 * :ref:`obj_director`
 * :ref:`func_director.add_backend`
 * :ref:`func_director.backend`
@@ -240,6 +241,19 @@ Exemple
 	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
 	    	return (synth(405));
 	}
+
+.. _func_backend_type:
+
+STRING backend_type(BACKEND)
+----------------------------
+
+Prototype
+	STRING backend_type(BACKEND)
+
+Description
+	Return the type of the director.
+Exemple
+	set req.http.director = unidirectors.backend_type(req.backend_hint);
 
 
 INSTALLATION
