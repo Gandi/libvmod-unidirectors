@@ -81,7 +81,6 @@ CONTENTS
 * :ref:`func_director.remove_backend`
 * :ref:`func_director.round_robin`
 * :ref:`func_is_backend`
-* :ref:`func_search_backend`
 
 .. _obj_director:
 
@@ -212,19 +211,6 @@ Description
 	Pick a backend from the director.
 Example
 	set req.backend_hint = udir.backend();
-
-.. _func_search_backend:
-
-BACKEND search_backend(BACKEND, IP)
------------------------------------
-
-Prototype
-	BACKEND search_backend(BACKEND, IP)
-
-Description
-	Pick a backend matching the IP from the director.
-Example
-	set req.backend_hint = unidirectors.search_backend(udir.backend(), client.ip);
 
 .. _func_is_backend:
 
