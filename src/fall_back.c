@@ -90,12 +90,6 @@ fallback_vdi_freeconn(const struct director *dir, unsigned maxconn)
 	return freeconn;
 }
 
-static void __match_proto__(udir_add_backend_f)
-vmod_fallback_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w)
-{
-	(void)udir_add_backend(vd, be, 0.0);
-}
-
 VCL_VOID __match_proto__()
 vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
@@ -103,7 +97,6 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	AZ(vd->priv);
 	
-	vd->add_backend = vmod_fallback_add_backend;
 	vd->dir->name = "fallback";
 	vd->dir->resolve = vmod_fallback_resolve;
 	vd->dir->freeconn = fallback_vdi_freeconn;

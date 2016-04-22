@@ -89,12 +89,6 @@ vmod_rr_resolve(const struct director *dir, struct worker *wrk,
 	return (be);
 }
 
-static void __match_proto__(udir_add_backend_f)
-vmod_rr_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w)
-{
-	(void)udir_add_backend(vd, be, 0.0);
-}
-
 VCL_VOID __match_proto__()
 vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
@@ -108,7 +102,6 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 	AN(vd->priv);
 
 	vd->fini = vmod_rr_fini;
-	vd->add_backend = vmod_rr_add_backend;
 	vd->dir->name = "round-robin";
 	vd->dir->resolve = vmod_rr_resolve;
 }

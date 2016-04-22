@@ -135,7 +135,6 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 	}
 
 	vd->fini = vmod_hash_fini;
-	vd->add_backend = udir_add_backend;
 	vd->dir->name = "hash";
 	vd->dir->resolve = vmod_hash_resolve;
 }

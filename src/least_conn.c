@@ -84,12 +84,6 @@ vmod_lc_resolve(const struct director *dir, struct worker *wrk,
 	return (be);
 }
 
-static void __match_proto__(udir_add_backend_f)
-vmod_lc_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w)
-{
-	(void)udir_add_backend(vd, be, 0.0);
-}
-
 VCL_VOID __match_proto__()
 vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT maxconn)
 {
@@ -104,7 +98,6 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 	rr->maxconn = maxconn;
 
 	vd->fini = vmod_lc_fini;
-	vd->add_backend = vmod_lc_add_backend;
 	vd->dir->name = "least-connections";
 	vd->dir->resolve = vmod_lc_resolve;
 }

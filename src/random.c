@@ -71,7 +71,6 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	AZ(vd->priv);
 
-	vd->add_backend = udir_add_backend;
 	vd->dir->name = "random";
 	vd->dir->resolve = vmod_random_resolve;
 }

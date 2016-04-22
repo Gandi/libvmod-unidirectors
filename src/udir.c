@@ -78,6 +78,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->search = udir_vdi_search;
 	vd->dir->freeconn = udir_vdi_freeconn;
 
+	vd->add_backend = udir_add_backend;
 	vd->vbm = vbit_init(8);
 	AZ(vd->priv);
 	AN(vd->vbm);
@@ -307,8 +308,8 @@ vmod_director_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BA
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	if (vd->add_backend)
-	        (void)(vd->add_backend(vd, be, w));
+	AN(vd->add_backend);
+	(void)(vd->add_backend(vd, be, w));
 }
 
 VCL_VOID __match_proto__()
