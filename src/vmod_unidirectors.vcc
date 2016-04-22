@@ -130,6 +130,18 @@ Example
 	udir.hash("client-identity");
 	set req.http.client-identity = client.ip;
 
+$Method VOID .leastconn(INT)
+
+Description
+	Configure a director as least connections.
+
+	The leastconn director distributes load over the backends with
+	a weight based on free connections.
+	Param is a default maxconn used for backend with no maxconnections.
+
+Example
+	udir.leastconn(256);
+
 $Method VOID .add_backend(BACKEND, REAL weight=1.0)
 
 Description

@@ -77,6 +77,7 @@ CONTENTS
 * :ref:`func_director.backend`
 * :ref:`func_director.fallback`
 * :ref:`func_director.hash`
+* :ref:`func_director.leastconn`
 * :ref:`func_director.random`
 * :ref:`func_director.remove_backend`
 * :ref:`func_director.round_robin`
@@ -129,6 +130,24 @@ Description
 
 Example
 	udir.fallback();
+
+.. _func_director.leastconn:
+
+VOID director.leastconn(INT)
+----------------------------
+
+Prototype
+	VOID director.leastconn(INT)
+
+Description
+	Configure a director as least connections.
+
+	The leastconn director distributes load over the backends with
+	a weight based on the free connections.
+	Param is a default maxconn used for backend with no maxconnections.
+
+Example
+	udir.leastconn(256);
 
 .. _func_director.random:
 

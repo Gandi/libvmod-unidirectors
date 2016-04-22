@@ -267,6 +267,25 @@ udir_vdi_search(const struct director *dir, const struct suckaddr *sa)
 	return be;
 }
 
+unsigned __match_proto__(vdi_freeconn_f)
+udir_vdi_freeconn(const struct director *dir, unsigned maxconn)
+{
+	unsigned u, freeconn = 0;
+	struct vmod_unidirectors_director *vd;
+	VCL_BACKEND be = NULL;
+
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	udir_rdlock(vd);
+	for (u = 0; u < vd->n_backend && be == NULL; u++) {
+		be = vd->backend[u];
+		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+		if (be->freeconn)
+		        freeconn += be->freeconn(be, maxconn);
+	}
+	udir_unlock(vd);
+	return freeconn;
+}
+
 VCL_VOID __match_proto__()
 vmod_director__init(VRT_CTX, struct vmod_unidirectors_director **vdp, const char *vcl_name)
 {

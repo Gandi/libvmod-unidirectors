@@ -76,4 +76,5 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	vd->dir->resolve = vmod_random_resolve;
 	vd->dir->healthy = udir_vdi_healthy;
 	vd->dir->search = udir_vdi_search;
+	vd->dir->freeconn = udir_vdi_freeconn;
 }
