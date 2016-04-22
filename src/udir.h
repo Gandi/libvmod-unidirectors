@@ -31,7 +31,6 @@
  * SUCH DAMAGE.
  */
 
-struct vbitmap;
 struct vmod_unidirectors_director;
 
 typedef void udir_add_backend_f(struct vmod_unidirectors_director *, VCL_BACKEND, double);
@@ -46,10 +45,9 @@ struct vmod_unidirectors_director {
 	unsigned				n_backend;
 	unsigned				l_backend;
 	VCL_BACKEND				*backend;
-	double					*weight;
-	double					total_weight;
+	double					*base_weight;
+	double					*pick_weight;
 	struct director				*dir;
-	struct vbitmap				*vbm;
 
         udir_add_backend_f      *add_backend;
         udir_remove_backend_f   *remove_backend;
@@ -67,6 +65,7 @@ void udir_add_backend(struct vmod_unidirectors_director*, VCL_BACKEND be, double
 unsigned udir_remove_backend(struct vmod_unidirectors_director*, VCL_BACKEND be);
 unsigned udir_any_healthy(struct vmod_unidirectors_director*, const struct busyobj *,
     double *changed);
+unsigned udir_pick_by_weight(const struct vmod_unidirectors_director *vd, double w);
 VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, const struct busyobj *);
 
 VCL_BACKEND udir_vdi_search(const struct director*, const struct suckaddr *sa);

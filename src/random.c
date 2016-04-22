@@ -40,7 +40,6 @@
 #include "cache/cache_director.h"
 
 #include "vrt.h"
-#include "vbm.h"
 
 #include "udir.h"
 

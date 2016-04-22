@@ -34,7 +34,6 @@
 #include "cache/cache_director.h"
 
 #include "vrt.h"
-#include "vbm.h"
 #include "vcc_if.h"
 
 #include "udir.h"
@@ -62,9 +61,9 @@ vmod_lc_resolve(const struct director *dir, struct worker *wrk,
 {
 	struct vmod_unidirectors_director *vd;
         struct vmod_director_leastconn *rr;
-	unsigned u;
-	double r;
-	VCL_BACKEND be = NULL;
+	unsigned u, freeconn;
+	double r, tw = 0.0;
+	VCL_BACKEND be;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
@@ -75,12 +74,23 @@ vmod_lc_resolve(const struct director *dir, struct worker *wrk,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		vd->weight[u] = be->freeconn(be, rr->maxconn);
+		if (be->healthy(be, bo, NULL)) {
+			freeconn = be->freeconn(be, rr->maxconn);
+			vd->pick_weight[u] = vd->base_weight[u] * freeconn;
+			tw += vd->pick_weight[u];
+		} else
+			vd->pick_weight[u] = 0;
+	}
+	be = NULL;
+	if (tw > 0.0) {
+		r = scalbn(random(), -31);
+		assert(r >= 0 && r < 1.0);
+		u = udir_pick_by_weight(vd, r * tw);
+		assert(u < vd->n_backend);
+		be = vd->backend[u];
+		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 	}
 	udir_unlock(vd);
-	r = scalbn(random(), -31);
-	assert(r >= 0 && r < 1.0);
-	be = udir_pick_be(vd, r, bo);
 	return (be);
 }
 

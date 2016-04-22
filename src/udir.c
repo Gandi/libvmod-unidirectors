@@ -39,7 +39,6 @@
 #include "cache/cache_director.h"
 
 #include "vrt.h"
-#include "vbm.h"
 
 #include "udir.h"
 
@@ -50,8 +49,10 @@ udir_expand(struct vmod_unidirectors_director *vd, unsigned n)
 
 	vd->backend = realloc(vd->backend, n * sizeof *vd->backend);
 	AN(vd->backend);
-	vd->weight = realloc(vd->weight, n * sizeof *vd->weight);
-	AN(vd->weight);
+	vd->base_weight = realloc(vd->base_weight, n * sizeof *vd->base_weight);
+	AN(vd->base_weight);
+	vd->pick_weight = realloc(vd->pick_weight, n * sizeof *vd->pick_weight);
+	AN(vd->pick_weight);
 	vd->l_backend = n;
 }
 
@@ -79,9 +80,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->freeconn = udir_vdi_freeconn;
 
 	vd->add_backend = udir_add_backend;
-	vd->vbm = vbit_init(8);
 	AZ(vd->priv);
-	AN(vd->vbm);
 }
 
 void
@@ -99,11 +98,11 @@ udir_delete(struct vmod_unidirectors_director **vdp)
 	AZ(vd->priv);
 
 	free(vd->backend);
-	free(vd->weight);
+	free(vd->base_weight);
+	free(vd->pick_weight);
 	AZ(pthread_rwlock_destroy(&vd->mtx));
 	free(vd->dir->vcl_name);
 	FREE_OBJ(vd->dir);
-	vbit_destroy(vd->vbm);
 	FREE_OBJ(vd);
 }
 
@@ -142,8 +141,7 @@ udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w
 	assert(vd->n_backend < vd->l_backend);
 	u = vd->n_backend++;
 	vd->backend[u] = be;
-	vd->weight[u] = weight;
-	vd->total_weight += weight;
+	vd->base_weight[u] = weight;
 	udir_unlock(vd);
 }
 
@@ -164,10 +162,10 @@ udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 		udir_unlock(vd);
 		return (vd->n_backend);
 	}
-	vd->total_weight -= vd->weight[u];
 	n = (vd->n_backend - u) - 1;
 	memmove(&vd->backend[u], &vd->backend[u+1], n * sizeof(vd->backend[0]));
-	memmove(&vd->weight[u], &vd->weight[u+1], n * sizeof(vd->weight[0]));
+	memmove(&vd->base_weight[u], &vd->base_weight[u+1], n * sizeof(vd->base_weight[0]));
+	memmove(&vd->pick_weight[u], &vd->pick_weight[u+1], n * sizeof(vd->pick_weight[0]));
 	vd->n_backend--;
 	udir_unlock(vd);
 	return (vd->n_backend);
@@ -207,9 +205,8 @@ udir_any_healthy(struct vmod_unidirectors_director *vd, const struct busyobj *bo
 	return (retval);
 }
 
-static unsigned
-udir_pick_by_weight(const struct vmod_unidirectors_director *vd, double w,
-		    const struct vbitmap *blacklist)
+unsigned
+udir_pick_by_weight(const struct vmod_unidirectors_director *vd, double w)
 {
 	double a = 0.0;
 	VCL_BACKEND be = NULL;
@@ -218,9 +215,9 @@ udir_pick_by_weight(const struct vmod_unidirectors_director *vd, double w,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (blacklist != NULL && vbit_test(blacklist, u))
+		if (vd->pick_weight[u] == 0)
 			continue;
-		a += vd->weight[u];
+		a += vd->pick_weight[u];
 		if (w < a)
 			return (u);
 	}
@@ -232,18 +229,21 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, const struct busyo
 {
 	unsigned u;
 	double tw = 0.0;
-	VCL_BACKEND be = NULL;
+	VCL_BACKEND be;
 
 	udir_rdlock(vd);
 	for (u = 0; u < vd->n_backend; u++) {
-		if (vd->backend[u]->healthy(vd->backend[u], bo, NULL)) {
-			vbit_clr(vd->vbm, u);
-			tw += vd->weight[u];
+		be = vd->backend[u];
+		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+		if (be->healthy(be, bo, NULL)) {
+			vd->pick_weight[u] = vd->base_weight[u];
+			tw += vd->pick_weight[u];
 		} else
-			vbit_set(vd->vbm, u);
+			vd->pick_weight[u] = 0;
 	}
+	be = NULL;
 	if (tw > 0.0) {
-		u = udir_pick_by_weight(vd, w * tw, vd->vbm);
+		u = udir_pick_by_weight(vd, w * tw);
 		assert(u < vd->n_backend);
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
