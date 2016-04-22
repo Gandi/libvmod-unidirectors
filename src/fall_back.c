@@ -69,7 +69,7 @@ vmod_fallback_resolve(const struct director *dir, struct worker *wrk,
 }
 
 static unsigned __match_proto__(vdi_freeconn_f)
-fallback_vdi_freeconn(const struct director *dir, unsigned maxconn)
+fallback_vdi_freeconn(const struct director *dir, const struct busyobj *bo, unsigned maxconn)
 {
 	unsigned u, freeconn = 0;
 	struct vmod_unidirectors_director *vd;
@@ -80,9 +80,9 @@ fallback_vdi_freeconn(const struct director *dir, unsigned maxconn)
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, NULL, NULL)) {
+		if (be->healthy(be, bo, NULL)) {
 			if (be->freeconn)
-			        freeconn = be->freeconn(be, maxconn);
+			        freeconn = be->freeconn(be, bo, maxconn);
 			break;
 		}
 	}

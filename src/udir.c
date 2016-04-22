@@ -272,7 +272,7 @@ udir_vdi_search(const struct director *dir, const struct suckaddr *sa)
 }
 
 unsigned __match_proto__(vdi_freeconn_f)
-udir_vdi_freeconn(const struct director *dir, unsigned maxconn)
+udir_vdi_freeconn(const struct director *dir, const struct busyobj *bo, unsigned maxconn)
 {
 	unsigned u, freeconn = 0;
 	struct vmod_unidirectors_director *vd;
@@ -284,7 +284,7 @@ udir_vdi_freeconn(const struct director *dir, unsigned maxconn)
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		if (be->freeconn)
-		        freeconn += be->freeconn(be, maxconn);
+		        freeconn += be->freeconn(be, bo, maxconn);
 	}
 	udir_unlock(vd);
 	return freeconn;

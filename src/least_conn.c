@@ -75,7 +75,7 @@ vmod_lc_resolve(const struct director *dir, struct worker *wrk,
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		if (be->healthy(be, bo, NULL)) {
-			freeconn = be->freeconn(be, rr->maxconn);
+			freeconn = be->freeconn(be, bo, rr->maxconn);
 			vd->pick_weight[u] = vd->base_weight[u] * freeconn;
 			tw += vd->pick_weight[u];
 		} else
