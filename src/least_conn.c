@@ -107,7 +107,4 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 	vd->add_backend = vmod_lc_add_backend;
 	vd->dir->name = "least-connections";
 	vd->dir->resolve = vmod_lc_resolve;
-	vd->dir->healthy = udir_vdi_healthy;
-	vd->dir->search = udir_vdi_search;
-	vd->dir->freeconn = udir_vdi_freeconn;
 }

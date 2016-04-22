@@ -84,7 +84,4 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 	vd->add_backend = vmod_fallback_add_backend;
 	vd->dir->name = "fallback";
 	vd->dir->resolve = vmod_fallback_resolve;
-	vd->dir->healthy = udir_vdi_healthy;
-	vd->dir->search = udir_vdi_search;
-	vd->dir->freeconn = udir_vdi_freeconn;
 }

@@ -73,8 +73,11 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->name = "raw";
 	REPLACE(vd->dir->vcl_name, vcl_name);
 	vd->dir->priv = vd;
-	AZ(vd->dir->healthy);
 	AZ(vd->dir->resolve);
+	vd->dir->healthy = udir_vdi_healthy;
+	vd->dir->search = udir_vdi_search;
+	vd->dir->freeconn = udir_vdi_freeconn;
+
 	vd->vbm = vbit_init(8);
 	AZ(vd->priv);
 	AN(vd->vbm);
