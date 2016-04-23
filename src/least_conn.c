@@ -39,7 +39,7 @@
 #include "udir.h"
 
 static const struct director * __match_proto__(vdi_resolve_f)
-vmod_lc_resolve(const struct director *dir, struct worker *wrk,
+lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 		struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
@@ -84,5 +84,5 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd)
 	AZ(vd->priv);
 
 	vd->dir->name = "least-connections";
-	vd->dir->resolve = vmod_lc_resolve;
+	vd->dir->resolve = lc_vdi_resolve;
 }

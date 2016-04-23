@@ -74,7 +74,7 @@ vmod_hash_fini(void **ppriv)
 }
 
 static VCL_BACKEND __match_proto__(vdi_resolve_f)
-vmod_hash_resolve(const struct director *dir, struct worker *wrk,
+hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 		  struct busyobj *bo)
 {
         struct vmod_unidirectors_director *vd;
@@ -136,5 +136,5 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 
 	vd->fini = vmod_hash_fini;
 	vd->dir->name = "hash";
-	vd->dir->resolve = vmod_hash_resolve;
+	vd->dir->resolve = hash_vdi_resolve;
 }

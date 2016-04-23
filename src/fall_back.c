@@ -44,7 +44,7 @@
 #include "udir.h"
 
 static const struct director * __match_proto__(vdi_resolve_f)
-vmod_fallback_resolve(const struct director *dir, struct worker *wrk,
+fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
     struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
@@ -99,6 +99,6 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 	AZ(vd->priv);
 	
 	vd->dir->name = "fallback";
-	vd->dir->resolve = vmod_fallback_resolve;
+	vd->dir->resolve = fallback_vdi_resolve;
 	vd->dir->nconn = fallback_vdi_nconn;
 }

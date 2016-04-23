@@ -46,7 +46,7 @@
 #include "vcc_if.h"
 
 static const struct director * __match_proto__(vdi_resolve_f)
-vmod_random_resolve(const struct director *dir, struct worker *wrk,
+random_vdi_resolve(const struct director *dir, struct worker *wrk,
 		    struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
@@ -71,5 +71,5 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	AZ(vd->priv);
 
 	vd->dir->name = "random";
-	vd->dir->resolve = vmod_random_resolve;
+	vd->dir->resolve = random_vdi_resolve;
 }
