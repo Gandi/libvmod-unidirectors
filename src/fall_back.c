@@ -75,6 +75,7 @@ fallback_vdi_nconn(const struct director *dir, const struct busyobj *bo)
 	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be = NULL;
 
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
 	for (u = 0; u < vd->n_backend; u++) {

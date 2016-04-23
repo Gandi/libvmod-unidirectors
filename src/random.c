@@ -49,17 +49,17 @@ static const struct director * __match_proto__(vdi_resolve_f)
 vmod_random_resolve(const struct director *dir, struct worker *wrk,
 		    struct busyobj *bo)
 {
-	struct vmod_unidirectors_director *rr;
+	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be;
 	double r;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
-	CAST_OBJ_NOTNULL(rr, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	r = scalbn(random(), -31);
 	assert(r >= 0 && r < 1.0);
-	be = udir_pick_be(rr, r, bo);
+	be = udir_pick_be(vd, r, bo);
 	return (be);
 }
 
