@@ -77,7 +77,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	AZ(vd->dir->resolve);
 	vd->dir->healthy = udir_vdi_healthy;
 	vd->dir->search = udir_vdi_search;
-	vd->dir->freeconn = udir_vdi_freeconn;
+	vd->dir->nconn = udir_vdi_nconn;
 
 	vd->add_backend = udir_add_backend;
 	AZ(vd->priv);
@@ -271,10 +271,10 @@ udir_vdi_search(const struct director *dir, const struct suckaddr *sa)
 	return be;
 }
 
-unsigned __match_proto__(vdi_freeconn_f)
-udir_vdi_freeconn(const struct director *dir, const struct busyobj *bo, unsigned maxconn)
+unsigned __match_proto__(vdi_nconn_f)
+udir_vdi_nconn(const struct director *dir, const struct busyobj *bo)
 {
-	unsigned u, freeconn = 0;
+	unsigned u, nconn = 0;
 	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be = NULL;
 
@@ -283,11 +283,11 @@ udir_vdi_freeconn(const struct director *dir, const struct busyobj *bo, unsigned
 	for (u = 0; u < vd->n_backend && be == NULL; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->freeconn)
-		        freeconn += be->freeconn(be, bo, maxconn);
+		AN(be->nconn);
+		nconn += be->nconn(be, bo);
 	}
 	udir_unlock(vd);
-	return freeconn;
+	return nconn;
 }
 
 VCL_VOID __match_proto__()

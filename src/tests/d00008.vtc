@@ -39,7 +39,7 @@ varnish v1 -vcl+backend {
 
 	sub vcl_init {
 		new foo = unidirectors.director();
-		foo.leastconn(256);
+		foo.leastconn();
 		foo.add_backend(s1);
 		foo.add_backend(s2);
 		foo.add_backend(s3);

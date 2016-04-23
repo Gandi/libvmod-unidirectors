@@ -133,21 +133,20 @@ Example
 
 .. _func_director.leastconn:
 
-VOID director.leastconn(INT)
+VOID director.leastconn()
 ----------------------------
 
 Prototype
-	VOID director.leastconn(INT)
+	VOID director.leastconn()
 
 Description
 	Configure a director as least connections.
 
 	The leastconn director distributes load over the backends with
-	a weight based on the free connections.
-	Param is a default maxconn used for backend with no maxconnections.
+	a weight based on number of connections.
 
 Example
-	udir.leastconn(256);
+	udir.leastconn();
 
 .. _func_director.random:
 

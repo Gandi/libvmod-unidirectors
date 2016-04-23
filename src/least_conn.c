@@ -38,30 +38,12 @@
 
 #include "udir.h"
 
-struct vmod_director_leastconn {
-	unsigned				magic;
-#define VMOD_DIRECTOR_LEASTCONN_MAGIC           0xadda6fc5
-	unsigned				maxconn;
-};
-
-static void __match_proto__(udir_fini_f)
-vmod_lc_fini(void **ppriv)
-{
-        struct vmod_director_leastconn *rr;
-	AN(ppriv);
-	rr = *ppriv;
-	*ppriv = NULL;
-	CHECK_OBJ_NOTNULL(rr, VMOD_DIRECTOR_LEASTCONN_MAGIC);
-	FREE_OBJ(rr);
-}
-
 static const struct director * __match_proto__(vdi_resolve_f)
 vmod_lc_resolve(const struct director *dir, struct worker *wrk,
 		struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
-        struct vmod_director_leastconn *rr;
-	unsigned u, freeconn;
+	unsigned u, nconn;
 	double r, tw = 0.0;
 	VCL_BACKEND be;
 
@@ -69,14 +51,14 @@ vmod_lc_resolve(const struct director *dir, struct worker *wrk,
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_LEASTCONN_MAGIC);
 	udir_rdlock(vd);
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		if (be->healthy(be, bo, NULL)) {
-			freeconn = be->freeconn(be, bo, rr->maxconn);
-			vd->pick_weight[u] = vd->base_weight[u] * freeconn;
+			AN(be->nconn);
+			nconn = be->nconn(be, bo);
+			vd->pick_weight[u] = vd->base_weight[u] / (nconn+1);
 			tw += vd->pick_weight[u];
 		} else
 			vd->pick_weight[u] = 0;
@@ -95,19 +77,12 @@ vmod_lc_resolve(const struct director *dir, struct worker *wrk,
 }
 
 VCL_VOID __match_proto__()
-vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT maxconn)
+vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
-        struct vmod_director_leastconn *rr;
-
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	AZ(vd->priv);
-	ALLOC_OBJ(rr, VMOD_DIRECTOR_LEASTCONN_MAGIC);
-	vd->priv = rr;
-	AN(vd->priv);
-	rr->maxconn = maxconn;
 
-	vd->fini = vmod_lc_fini;
 	vd->dir->name = "least-connections";
 	vd->dir->resolve = vmod_lc_resolve;
 }
