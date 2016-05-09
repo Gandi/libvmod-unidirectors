@@ -69,5 +69,5 @@ unsigned udir_pick_by_weight(const struct vmod_unidirectors_director *vd, double
 VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, const struct busyobj *);
 
 VCL_BACKEND udir_vdi_search(const struct director*, const struct suckaddr *sa);
-unsigned udir_vdi_nconn(const struct director*, const struct busyobj *bo);
+unsigned udir_vdi_busy(const struct director*, const struct busyobj *bo, double *changed, double *load);
 unsigned udir_vdi_healthy(const struct director *, const struct busyobj *bo, double *changed);

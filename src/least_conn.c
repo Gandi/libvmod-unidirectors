@@ -33,6 +33,7 @@
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
+#include "vtim.h"
 #include "vrt.h"
 #include "vcc_if.h"
 
@@ -43,8 +44,8 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 		struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
-	unsigned u, nconn;
-	double r, tw = 0.0;
+	unsigned u;
+	double r, changed, load, tw = 0.0;
 	VCL_BACKEND be;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
@@ -55,10 +56,9 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, bo, NULL)) {
-			AN(be->nconn);
-			nconn = be->nconn(be, bo);
-			vd->pick_weight[u] = vd->base_weight[u] / (nconn+1);
+		AN(be->busy);
+		if (be->busy(be, bo, &changed, &load)) {
+			vd->pick_weight[u] = vd->base_weight[u] / (load+1);
 			tw += vd->pick_weight[u];
 		} else
 			vd->pick_weight[u] = 0;

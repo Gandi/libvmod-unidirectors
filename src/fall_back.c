@@ -68,12 +68,15 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (be);
 }
 
-static unsigned __match_proto__(vdi_nconn_f)
-fallback_vdi_nconn(const struct director *dir, const struct busyobj *bo)
+static unsigned __match_proto__(vdi_busy_f)
+fallback_vdi_busy(const struct director *dir, const struct busyobj *bo,
+		  double *changed, double *load)
 {
-	unsigned u, nconn = 0;
+	unsigned u;
+	unsigned retval = 0;
+	double c = 0, l = 0;
 	struct vmod_unidirectors_director *vd;
-	VCL_BACKEND be = NULL;
+	VCL_BACKEND be;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
@@ -81,14 +84,17 @@ fallback_vdi_nconn(const struct director *dir, const struct busyobj *bo)
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, bo, NULL)) {
-			AN(be->nconn);
-			nconn = be->nconn(be, bo);
+		AN(be->busy);
+		retval = be->busy(be, bo, &c, &l);
+		if (retval)
 			break;
-		}
 	}
 	udir_unlock(vd);
-	return nconn;
+	if (changed != NULL)
+		*changed = c;
+	if (load != NULL)
+		*load = l;
+	return (retval);
 }
 
 VCL_VOID __match_proto__()
@@ -100,5 +106,5 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 	
 	vd->dir->name = "fallback";
 	vd->dir->resolve = fallback_vdi_resolve;
-	vd->dir->nconn = fallback_vdi_nconn;
+	vd->dir->busy = fallback_vdi_busy;
 }
