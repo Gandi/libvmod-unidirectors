@@ -29,6 +29,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <values.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
@@ -39,41 +40,45 @@
 
 #include "udir.h"
 
+
 static const struct director * __match_proto__(vdi_resolve_f)
 lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 		struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
 	unsigned u;
-	double r, changed, load, tw = 0.0;
-	VCL_BACKEND be;
+	double changed, now, delta_t, load, least = MAXDOUBLE;
+	VCL_BACKEND be, rbe = NULL;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
 	udir_rdlock(vd);
+	now = VTIM_real();
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		AN(be->busy);
 		if (be->busy(be, bo, &changed, &load)) {
-			vd->pick_weight[u] = vd->base_weight[u] / (load+1);
-			tw += vd->pick_weight[u];
-		} else
-			vd->pick_weight[u] = 0;
-	}
-	be = NULL;
-	if (tw > 0.0) {
-		r = scalbn(random(), -31);
-		assert(r >= 0 && r < 1.0);
-		u = udir_pick_by_weight(vd, r * tw);
-		assert(u < vd->n_backend);
-		be = vd->backend[u];
-		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+			delta_t = now - changed;
+			if (delta_t <= 0) {
+				if (rbe == NULL)
+					rbe = be;
+				continue;
+			}
+			load = load / vd->base_weight[u];
+			if (delta_t < 60)
+				load = load / delta_t * 60;
+			if (load < least) {
+				rbe = be;
+				least = load;
+			}
+		}
 	}
 	udir_unlock(vd);
-	return (be);
+	return (rbe);
 }
 
 VCL_VOID __match_proto__()
