@@ -279,18 +279,18 @@ udir_vdi_search(const struct director *dir, const struct suckaddr *sa)
 {
         unsigned u;
 	struct vmod_unidirectors_director *vd;
-	VCL_BACKEND be = NULL;
+	VCL_BACKEND be, rbe = NULL;
 
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
-	for (u = 0; u < vd->n_backend && be == NULL; u++) {
-	        VCL_BACKEND tbe = vd->backend[u];
-		CHECK_OBJ_NOTNULL(tbe, DIRECTOR_MAGIC);
-		if (tbe->search)
-		        be = tbe->search(tbe, sa);
+	for (u = 0; u < vd->n_backend && rbe == NULL; u++) {
+	        be = vd->backend[u];
+		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+		if (be->search)
+		        rbe = be->search(be, sa);
 	}
 	udir_unlock(vd);
-	return be;
+	return (rbe);
 }
 
 unsigned __match_proto__(vdi_busy_f)
