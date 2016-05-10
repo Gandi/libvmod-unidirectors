@@ -41,11 +41,29 @@
 #include "udir.h"
 
 
+struct vmod_director_leastconn {
+	unsigned				magic;
+#define VMOD_DIRECTOR_LEASTCONN_MAGIC           0xadda6fc5
+	unsigned				slow_start;
+};
+
+static void __match_proto__(udir_fini_f)
+vmod_lc_fini(void **ppriv)
+{
+	struct vmod_director_leastconn *rr;
+	AN(ppriv);
+	rr = *ppriv;
+	*ppriv = NULL;
+	CHECK_OBJ_NOTNULL(rr, VMOD_DIRECTOR_LEASTCONN_MAGIC);
+	FREE_OBJ(rr);
+}
+
 static const struct director * __match_proto__(vdi_resolve_f)
 lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 		struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
+	struct vmod_director_leastconn *rr;
 	unsigned u;
 	double changed, now, delta_t, load, least = MAXDOUBLE;
 	VCL_BACKEND be, rbe = NULL;
@@ -54,6 +72,7 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_LEASTCONN_MAGIC);
 
 	udir_rdlock(vd);
 	now = VTIM_real();
@@ -69,8 +88,8 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 				continue;
 			}
 			load = load / vd->base_weight[u];
-			if (delta_t < 60)
-				load = load / delta_t * 60;
+			if (delta_t < rr->slow_start)
+				load = load / delta_t * rr->slow_start;
 			if (load < least) {
 				rbe = be;
 				least = load;
@@ -82,12 +101,19 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 }
 
 VCL_VOID __match_proto__()
-vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd)
+vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT slow_start)
 {
+	struct vmod_director_leastconn *rr;
+
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	AZ(vd->priv);
+	ALLOC_OBJ(rr, VMOD_DIRECTOR_LEASTCONN_MAGIC);
+	vd->priv = rr;
+	AN(vd->priv);
+	rr->slow_start = slow_start;
 
+	vd->fini = vmod_lc_fini;
 	vd->dir->name = "least-connections";
 	vd->dir->resolve = lc_vdi_resolve;
 }

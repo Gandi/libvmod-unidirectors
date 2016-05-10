@@ -130,7 +130,7 @@ Example
 	udir.hash("client-identity");
 	set req.http.client-identity = client.ip;
 
-$Method VOID .leastconn()
+$Method VOID .leastconn(INT slow_start="30")
 
 Description
 	Configure a director as least connections.
