@@ -34,7 +34,7 @@ DESCRIPTION
 
 The module implements a set of basic load balancing techniques. It's
 based on vmod_directors. The major change is the unification of directors
-type.
+type and the ability to change the load balancing method dynamically.
 One of the goal is to mimic Varnish 3.0 functionality like to easly stack
 hash director on fallback director.
 Only one director C-type is generated, more convenient to manipulate it
@@ -133,20 +133,21 @@ Example
 
 .. _func_director.leastconn:
 
-VOID director.leastconn()
+VOID director.leastconn(INT)
 ----------------------------
 
 Prototype
-	VOID director.leastconn()
+	VOID director.leastconn(INT slow_start)
 
 Description
 	Configure a director as least connections.
 
-	The leastconn director distributes load over the backends with
-	a weight based on number of connections.
+	The director chooses the less busy backend server.
+	A weight based on number of connections is used on default backend.
+	The slow start optional parameter is defined in seconds.
 
 Example
-	udir.leastconn();
+	udir.leastconn(30);
 
 .. _func_director.random:
 
