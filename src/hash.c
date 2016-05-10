@@ -115,7 +115,10 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AZ(vd->priv);
+
+	udir_wrlock(vd);
+	udir_delete_priv(vd);
+
 	ALLOC_OBJ(rr, VMOD_DIRECTOR_HASH_MAGIC);
 	vd->priv = rr;
 	AN(vd->priv);
@@ -136,5 +139,8 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 
 	vd->fini = vmod_hash_fini;
 	vd->dir->name = "hash";
+	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = hash_vdi_resolve;
+
+	udir_unlock(vd);
 }

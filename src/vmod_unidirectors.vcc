@@ -39,7 +39,7 @@ DESCRIPTION
 
 The module implements a set of basic load balancing techniques. It's
 based on vmod_directors. The major change is the unification of directors
-type.
+type and the ability to change the load balancing method dynamically.
 One of the goal is to mimic Varnish 3.0 functionality like to easly stack 
 hash director on fallback director.
 Only one director C-type is generated, more convenient to manipulate it 

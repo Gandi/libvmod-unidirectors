@@ -107,7 +107,10 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AZ(vd->priv);
+
+	udir_wrlock(vd);
+	udir_delete_priv(vd);
+
 	ALLOC_OBJ(rr, VMOD_DIRECTOR_LEASTCONN_MAGIC);
 	vd->priv = rr;
 	AN(vd->priv);
@@ -115,5 +118,8 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 
 	vd->fini = vmod_lc_fini;
 	vd->dir->name = "least-connections";
+	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = lc_vdi_resolve;
+
+	udir_unlock(vd);
 }

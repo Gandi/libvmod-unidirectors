@@ -96,12 +96,18 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AZ(vd->priv);
+
+	udir_wrlock(vd);
+	udir_delete_priv(vd);
+
 	ALLOC_OBJ(rr, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 	vd->priv = rr;
 	AN(vd->priv);
 
 	vd->fini = vmod_rr_fini;
 	vd->dir->name = "round-robin";
+	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = rr_vdi_resolve;
+
+	udir_unlock(vd);
 }

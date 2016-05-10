@@ -102,9 +102,13 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AZ(vd->priv);
+
+	udir_wrlock(vd);
+	udir_delete_priv(vd);
 	
 	vd->dir->name = "fallback";
-	vd->dir->resolve = fallback_vdi_resolve;
 	vd->dir->busy = fallback_vdi_busy;
+	vd->dir->resolve = fallback_vdi_resolve;
+
+	udir_unlock(vd);
 }

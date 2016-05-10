@@ -77,9 +77,18 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	AZ(vd->dir->resolve);
 	vd->dir->healthy = udir_vdi_healthy;
 	vd->dir->search = udir_vdi_search;
-	vd->dir->busy = udir_vdi_busy;
 
 	vd->add_backend = udir_add_backend;
+	AZ(vd->priv);
+}
+
+void
+udir_delete_priv(struct vmod_unidirectors_director *vd)
+{
+	if (vd->fini) {
+	        vd->fini(&vd->priv);
+		vd->fini = NULL;
+	}
 	AZ(vd->priv);
 }
 
@@ -93,9 +102,7 @@ udir_delete(struct vmod_unidirectors_director **vdp)
 	*vdp = NULL;
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
-	if (vd->fini)
-	        vd->fini(&vd->priv);
-	AZ(vd->priv);
+	udir_delete_priv(vd);
 
 	free(vd->backend);
 	free(vd->base_weight);
