@@ -56,6 +56,20 @@ udir_expand(struct vmod_unidirectors_director *vd, unsigned n)
 	vd->l_backend = n;
 }
 
+static const struct director * __match_proto__(vdi_resolve_f)
+udir_vdi_resolve(const struct director *dir, struct worker *wrk,
+		 struct busyobj *bo)
+{
+	struct vmod_unidirectors_director *vd;
+
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
+	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
+	return (NULL);
+}
+
 void
 udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 {
@@ -77,6 +91,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	AZ(vd->dir->resolve);
 	vd->dir->healthy = udir_vdi_healthy;
 	vd->dir->search = udir_vdi_search;
+	vd->dir->resolve = udir_vdi_resolve;
 
 	vd->add_backend = udir_add_backend;
 	AZ(vd->priv);
