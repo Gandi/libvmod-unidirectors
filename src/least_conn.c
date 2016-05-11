@@ -87,7 +87,7 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 					rbe = be;
 				continue;
 			}
-			load = load / vd->base_weight[u];
+			load = load / vd->weight[u];
 			if (delta_t < rr->slow_start)
 				load = load / delta_t * rr->slow_start;
 			if (load < least) {
