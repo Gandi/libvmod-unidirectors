@@ -53,17 +53,17 @@ client c1 {
 	expect resp.bodylen == 1
 	txreq -url "/foo2"
 	rxresp
-	expect resp.bodylen == 2
+	expect resp.bodylen == 4
 	txreq -url "/foo3"
 	rxresp
 	expect resp.bodylen == 3
 	txreq -url "/foo4"
 	rxresp
-	expect resp.bodylen == 4
+	expect resp.bodylen == 2
 } -run
 
 server s1 -start
-server s2 -start
+server s4 -start
 
 client c2 {
 	timeout 3
@@ -72,7 +72,7 @@ client c2 {
 	expect resp.bodylen == 1
 	txreq -url "/foo22"
 	rxresp
-	expect resp.bodylen == 2
+	expect resp.bodylen == 4
 } -run
 
 server s4 -start

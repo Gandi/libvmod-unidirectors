@@ -46,7 +46,7 @@
 struct vmod_director_round_robin {
 	unsigned				magic;
 #define VMOD_DIRECTOR_ROUND_ROBIN_MAGIC         0xe9537153
-	unsigned				nxt;
+	double				        w;
 };
 
 static void __match_proto__(udir_fini_f)
@@ -66,7 +66,8 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 {
 	struct vmod_unidirectors_director *vd;
         struct vmod_director_round_robin *rr;
-	unsigned u;
+	unsigned u, h, n_backend = 0;
+	double tw = 0.0;
 	VCL_BACKEND be = NULL;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
@@ -76,16 +77,25 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 	udir_rdlock(vd);
 	for (u = 0; u < vd->n_backend; u++) {
-		rr->nxt %= vd->n_backend;
-		be = vd->backend[rr->nxt];
-		rr->nxt++;
+		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, bo, NULL))
-			break;
+		if (be->healthy(be, bo, NULL)) {
+			vd->healthy_be[n_backend++] = u;
+			tw += vd->weight[u];
+		}
+	}
+	be = NULL;
+	if (tw > 0.0) {
+		h = rr->w * n_backend;
+		u = vd->healthy_be[h % n_backend];
+		assert(u < vd->n_backend);
+		rr->w += (1.0 - vd->weight[u] / tw);
+		if (rr->w >= n_backend)
+			rr->w -= n_backend;
+		be = vd->backend[u];
+		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 	}
 	udir_unlock(vd);
-	if (u == vd->n_backend)
-		be = NULL;
 	return (be);
 }
 
