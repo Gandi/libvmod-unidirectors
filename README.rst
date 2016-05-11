@@ -7,7 +7,7 @@ Varnish Directors Module
 ----------------------
 
 :Date: 2016-03-25
-:Version: 1.0
+:Version: 1.0.0
 :Manual section: 3
 
 
