@@ -35,14 +35,11 @@ varnish v1 -vcl+backend {
 		set req.backend_hint = udir.backend();
 	}
 
-	sub vcl_backend_fetch {
-		set bereq.http.director = unidirectors.backend_type(bereq.backend);
-	}
 	sub vcl_backend_response {
-		set beresp.http.director = bereq.http.director;
+		set beresp.http.director = unidirectors.backend_type(bereq.backend);
 	}
 	sub vcl_backend_error {
-		set beresp.http.director = bereq.http.director;
+		set beresp.http.director = unidirectors.backend_type(bereq.backend);
 	}
 
 } -start
