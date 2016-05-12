@@ -109,7 +109,8 @@ Prototype
 Description
 	Configure a director as round robin.
 
-	This director will pick backends in a round robin fashion.
+	This director will pick backends in a round robin fashion
+	according to weight.
 
 Example
 	udir.round_robin();
@@ -143,7 +144,7 @@ Description
 	Configure a director as least connections.
 
 	The director chooses the less busy backend server.
-	A weight based on number of connections is used on default backend.
+	A weight based on number of connections is used on tcp backend.
 	The slow start optional parameter is defined in seconds.
 
 Example
@@ -198,7 +199,6 @@ Prototype
 Description
 	Add a backend to the director with an optional weight.
 
-	Weight is only relevent for some load balancing method.
 	1.0 is the defaut value.
 
 Example
