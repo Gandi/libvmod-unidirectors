@@ -270,9 +270,9 @@ Prototype
 	STRING backend_type(BACKEND)
 
 Description
-	Return the type of the director.
+	Return the type of the backend.
 Exemple
-	set req.http.director = unidirectors.backend_type(req.backend_hint);
+	set beresp.http.director = unidirectors.backend_type(bereq.backend);
 
 
 INSTALLATION
