@@ -29,7 +29,7 @@
 #include "config.h"
 
 #include <stdlib.h>
-#include <values.h>
+#include <math.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
@@ -65,7 +65,7 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	struct vmod_unidirectors_director *vd;
 	struct vmod_director_leastconn *rr;
 	unsigned u;
-	double changed, now, delta_t, load, least = MAXDOUBLE;
+	double changed, now, delta_t, load, least = INFINITY;
 	VCL_BACKEND be, rbe = NULL;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
@@ -74,23 +74,20 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_LEASTCONN_MAGIC);
 
-	udir_rdlock(vd);
 	now = VTIM_real();
+	udir_rdlock(vd);
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		AN(be->busy);
 		if (be->busy(be, bo, &changed, &load)) {
 			delta_t = now - changed;
-			if (delta_t <= 0) {
-				if (rbe == NULL)
-					rbe = be;
-				continue;
-			}
+			if (delta_t < 0)
+				delta_t = 0.0;
 			load = load / vd->weight[u];
 			if (delta_t < rr->slow_start)
 				load = load / delta_t * rr->slow_start;
-			if (load < least) {
+			if (load <= least) {
 				rbe = be;
 				least = load;
 			}
