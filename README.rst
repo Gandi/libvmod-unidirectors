@@ -91,7 +91,8 @@ Description
 
 	You need to set a load balancing method before to use it.
 
-Example
+Example::
+
 	new udir = unidirectors.director()
 
 .. _func_director.round_robin:
@@ -108,7 +109,8 @@ Description
 	This director will pick backends in a round robin fashion
 	according to weight.
 
-Example
+Example::
+
 	udir.round_robin();
 
 .. _func_director.fallback:
@@ -125,7 +127,8 @@ Description
 	A fallback director will try each of the added backends in turn,
 	and return the first one that is healthy.
 
-Example
+Example::
+
 	udir.fallback();
 
 .. _func_director.leastconn:
@@ -145,7 +148,8 @@ Description
 
 	WARNING: need vdi_busy patch for Varnish
 
-Example
+Example::
+
 	udir.leastconn(30);
 
 .. _func_director.random:
@@ -162,7 +166,8 @@ Description
 	The random director distributes load over the backends using
 	a weighted random probability distribution.
 
-Example
+Example::
+
 	udir.random();
 
 .. _func_director.hash:
@@ -182,7 +187,8 @@ Description
 	Commonly used with ``client.ip`` or a session cookie to get
 	sticky sessions.
 
-Example
+Example::
+
 	udir.hash("client-identity");
 	set req.http.client-identity = client.ip;
 
@@ -199,7 +205,8 @@ Description
 
 	1.0 is the defaut value.
 
-Example
+Example::
+
 	udir.add_backend(backend1);
 	udir.add_backend(backend2, 2.0);
 
@@ -213,7 +220,9 @@ Prototype
 
 Description
 	Remove a backend from the director.
-Example
+
+Example::
+
 	udir.remove_backend(backend1);
 	udir.remove_backend(backend2);
 
@@ -227,7 +236,9 @@ Prototype
 
 Description
 	Pick a backend from the director.
-Example
+
+Example::
+
 	set req.backend_hint = udir.backend();
 
 .. _func_search_backend:
@@ -243,7 +254,8 @@ Description
 
 	WARNING: need vdi_search patch for Varnish
 
-Example
+Example::
+
 	set req.backend_hint = unidirectors.search_backend(udir.backend(), client.ip);
 
 .. _func_is_backend:
@@ -257,7 +269,9 @@ Prototype
 Description
 	Test if we have a backend (healthy or not).
 	Useful to authorise the backends to PURGE itself.
-Exemple
+	
+Example::
+
 	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
 	    	return (synth(405));
 	}
@@ -272,7 +286,9 @@ Prototype
 
 Description
 	Return the type of the backend.
-Exemple
+
+Exemple::
+
 	set beresp.http.director = unidirectors.backend_type(bereq.backend);
 
 
@@ -295,23 +311,23 @@ Pre-requisites::
 
 Usage::
 
- ./autogen.sh
- ./configure
+    ./autogen.sh
+    ./configure
 
 If you have installed Varnish to a non-standard directory, call
 ``autogen.sh`` and ``configure`` with ``PKG_CONFIG_PATH`` pointing to
 the appropriate path. For unidirectors, when varnishd configure was called
-with ``--prefix=$PREFIX``, use
+with ``--prefix=$PREFIX``, use::
 
- PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig
- export PKG_CONFIG_PATH
+    PKG_CONFIG_PATH=${PREFIX}/lib/pkgconfig
+    export PKG_CONFIG_PATH
 
 Make targets:
 
-* make - builds the vmod.
-* make install - installs your vmod.
-* make check - runs the unit tests in ``src/tests/*.vtc``
-* make distcheck - run check and prepare a tarball of the vmod.
+* ``make`` - builds the vmod.
+* ``make install`` - installs your vmod.
+* ``make check`` - runs the unit tests in ``src/tests/*.vtc``
+* ``make distcheck`` - run check and prepare a tarball of the vmod.
 
 Installation directories
 ------------------------
