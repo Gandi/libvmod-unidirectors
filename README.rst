@@ -287,7 +287,7 @@ Prototype
 Description
 	Return the type of the backend.
 
-Exemple::
+Example::
 
 	set beresp.http.director = unidirectors.backend_type(bereq.backend);
 
