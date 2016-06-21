@@ -143,6 +143,8 @@ Description
 	A weight based on number of connections is used on tcp backend.
 	The slow start optional parameter is defined in seconds.
 
+	WARNING: need vdi_busy patch for Varnish
+
 Example
 	udir.leastconn(30);
 
@@ -238,6 +240,9 @@ Prototype
 
 Description
 	Pick a backend matching the IP from the director.
+
+	WARNING: need vdi_search patch for Varnish
+
 Example
 	set req.backend_hint = unidirectors.search_backend(udir.backend(), client.ip);
 
@@ -282,6 +287,9 @@ Building requires the Varnish header files and uses pkg-config to find
 the necessary paths.
 
 Pre-requisites::
+
+ WARNING: search_backend and leastconn method need Varnish patchs
+ see https://github.com/ehocdet/varnish-cache/tree/4.1-unidirector
 
  sudo apt-get install -y autotools-dev make automake libtool pkg-config libvarnishapi1 libvarnishapi-dev
 

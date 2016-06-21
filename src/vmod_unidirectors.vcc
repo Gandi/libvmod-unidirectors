@@ -136,6 +136,8 @@ Description
 	A weight based on number of connections is used on tcp backend.
 	The slow start optional parameter is defined in seconds.
 
+	WARNING: need vdi_busy patch for Varnish
+
 Example
 	udir.leastconn(30);
 
@@ -169,6 +171,9 @@ $Function BACKEND search_backend(BACKEND, IP)
 
 Description
 	Pick a backend matching the IP from the director.
+
+	WARNING: need vdi_search patch for Varnish
+
 Example
 	set req.backend_hint = unidirectors.search(udir.backend(), client.ip);
 
