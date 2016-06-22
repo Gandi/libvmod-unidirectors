@@ -353,4 +353,3 @@ COMMON PROBLEMS
 * Incompatibilities with different Varnish Cache versions
 
   Make sure you build this vmod against its correspondent Varnish Cache version.
-  For unidirectors, to build against Varnish Cache 4.0, this vmod must be built from branch 4.0.
