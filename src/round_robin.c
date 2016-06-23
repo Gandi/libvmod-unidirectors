@@ -46,6 +46,7 @@
 struct vmod_director_round_robin {
 	unsigned				magic;
 #define VMOD_DIRECTOR_ROUND_ROBIN_MAGIC         0xe9537153
+	pthread_mutex_t			        mtx;
 	double				        w;
 };
 
@@ -57,6 +58,7 @@ vmod_rr_fini(void **ppriv)
 	rr = *ppriv;
 	*ppriv = NULL;
 	CHECK_OBJ_NOTNULL(rr, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
+	AZ(pthread_mutex_destroy(&rr->mtx));
 	FREE_OBJ(rr);
 }
 
@@ -98,12 +100,14 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	}
 	be = NULL;
 	if (tw > 0.0) {
+		AZ(pthread_mutex_lock(&rr->mtx));
 		h = rr->w * n_backend;
 		u = be_idx[h % n_backend];
 		assert(u < vd->n_backend);
 		rr->w += (1.0 - vd->weight[u] / tw);
 		if (rr->w >= n_backend)
 			rr->w -= n_backend;
+		AZ(pthread_mutex_unlock(&rr->mtx));
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 	}
@@ -126,6 +130,7 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 	ALLOC_OBJ(rr, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 	vd->priv = rr;
 	AN(vd->priv);
+	AZ(pthread_mutex_init(&rr->mtx, NULL));
 
 	vd->fini = vmod_rr_fini;
 	vd->dir->name = "round-robin";
