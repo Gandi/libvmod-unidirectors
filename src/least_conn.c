@@ -74,8 +74,10 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
-	now = VTIM_real();
+	if (vd->fini != vmod_lc_fini)
+		return (NULL);
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_LEASTCONN_MAGIC);
+	now = VTIM_real();
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
