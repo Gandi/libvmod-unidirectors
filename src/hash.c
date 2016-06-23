@@ -89,11 +89,13 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_ORNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
-
 	AN(bo->bereq);
+
+	udir_rdlock(vd);
+	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
 	if (!http_GetHdr(bo->bereq, rr->hdr, &p))
 	      p = NULL;
+	udir_unlock(vd);
 
 	SHA256_Init(&sha_ctx);
 	if (p != NULL && *p != '\0')
