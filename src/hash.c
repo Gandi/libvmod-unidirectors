@@ -92,8 +92,10 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 	AN(bo->bereq);
 
 	udir_rdlock(vd);
-	if (vd->fini != vmod_hash_fini)
+	if (vd->fini != vmod_hash_fini) {
+		udir_unlock(vd);
 		return (NULL);
+	}
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
 	if (!http_GetHdr(bo->bereq, rr->hdr, &p))
 	      p = NULL;
