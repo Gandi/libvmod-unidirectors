@@ -68,7 +68,8 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
         struct vmod_director_round_robin *rr;
 	unsigned u, h, n_backend = 0;
 	double tw = 0.0;
-	VCL_BACKEND be = NULL;
+	unsigned *be_idx;
+	VCL_BACKEND be;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
@@ -81,18 +82,24 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 		return (NULL);
 	}
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
+
+	if (!WS_Reserve(wrk->aws, vd->n_backend * sizeof(*be_idx))) {
+		udir_unlock(vd);
+		return (NULL);
+	}
+	be_idx = (void*)wrk->aws->f;
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		if (be->healthy(be, bo, NULL)) {
-			vd->healthy_be[n_backend++] = u;
+			be_idx[n_backend++] = u;
 			tw += vd->weight[u];
 		}
 	}
 	be = NULL;
 	if (tw > 0.0) {
 		h = rr->w * n_backend;
-		u = vd->healthy_be[h % n_backend];
+		u = be_idx[h % n_backend];
 		assert(u < vd->n_backend);
 		rr->w += (1.0 - vd->weight[u] / tw);
 		if (rr->w >= n_backend)
@@ -100,6 +107,7 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 	}
+	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
 	return (be);
 }

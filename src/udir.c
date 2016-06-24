@@ -51,8 +51,6 @@ udir_expand(struct vmod_unidirectors_director *vd, unsigned n)
 	AN(vd->backend);
 	vd->weight = realloc(vd->weight, n * sizeof *vd->weight);
 	AN(vd->weight);
-	vd->healthy_be = realloc(vd->healthy_be, n * sizeof *vd->healthy_be);
-	AN(vd->healthy_be);
 	vd->l_backend = n;
 }
 
@@ -121,7 +119,6 @@ udir_delete(struct vmod_unidirectors_director **vdp)
 
 	free(vd->backend);
 	free(vd->weight);
-	free(vd->healthy_be);
 	AZ(pthread_rwlock_destroy(&vd->mtx));
 	free(vd->dir->vcl_name);
 	FREE_OBJ(vd->dir);
@@ -187,7 +184,6 @@ udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 	n = (vd->n_backend - u) - 1;
 	memmove(&vd->backend[u], &vd->backend[u+1], n * sizeof(vd->backend[0]));
 	memmove(&vd->weight[u], &vd->weight[u+1], n * sizeof(vd->weight[0]));
-	memmove(&vd->healthy_be[u], &vd->healthy_be[u+1], n * sizeof(vd->healthy_be[0]));
 	vd->n_backend--;
 	udir_unlock(vd);
 	return (vd->n_backend);
@@ -228,18 +224,25 @@ udir_any_healthy(struct vmod_unidirectors_director *vd, const struct busyobj *bo
 }
 
 VCL_BACKEND
-udir_pick_be(struct vmod_unidirectors_director *vd, double w, const struct busyobj *bo)
+udir_pick_be(struct vmod_unidirectors_director *vd, double w, struct worker *wrk,
+	     struct busyobj *bo)
 {
 	unsigned u, h, n_backend = 0;
 	double a, tw = 0.0;
+	unsigned *be_idx;
 	VCL_BACKEND be;
 
 	udir_rdlock(vd);
+	if (!WS_Reserve(wrk->aws, vd->n_backend * sizeof(*be_idx))) {
+		udir_unlock(vd);
+		return (NULL);
+	}
+	be_idx = (void*)wrk->aws->f;
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		if (be->healthy(be, bo, NULL)) {
-			vd->healthy_be[n_backend++] = u;
+			be_idx[n_backend++] = u;
 			tw += vd->weight[u];
 		}
 	}
@@ -248,7 +251,7 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, const struct busyo
 		w *= tw;
 		a = 0.0;
 		for (h = 0; h < n_backend; h++) {
-			u = vd->healthy_be[h];
+			u = be_idx[h];
 			assert(u < vd->n_backend);
 			a += vd->weight[u];
 			if (w < a) {
@@ -258,6 +261,7 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, const struct busyo
 			}
 		}
 	}
+	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
 	return (be);
 }

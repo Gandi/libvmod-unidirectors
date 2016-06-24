@@ -109,7 +109,7 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 	r = vbe32dec(sha256);
 	r = scalbn(r, -32);
 	assert(r >= 0 && r <= 1.0);
-	be = udir_pick_be(vd, r, bo);
+	be = udir_pick_be(vd, r, wrk, bo);
 	return (be);
 }
 

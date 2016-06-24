@@ -59,7 +59,7 @@ random_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	r = scalbn(random(), -31);
 	assert(r >= 0 && r < 1.0);
-	be = udir_pick_be(vd, r, bo);
+	be = udir_pick_be(vd, r, wrk, bo);
 	return (be);
 }
 
