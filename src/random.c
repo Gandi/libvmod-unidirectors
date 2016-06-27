@@ -50,16 +50,24 @@ random_vdi_resolve(const struct director *dir, struct worker *wrk,
 		    struct busyobj *bo)
 {
 	struct vmod_unidirectors_director *vd;
-	VCL_BACKEND be;
+	VCL_BACKEND be = NULL;
 	double r;
+	unsigned *be_idx;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
+	udir_rdlock(vd);
 	r = scalbn(random(), -31);
 	assert(r >= 0 && r < 1.0);
-	be = udir_pick_be(vd, r, wrk, bo);
+	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
+		be_idx = (void*)wrk->aws->f;
+		be = udir_pick_be(vd, r, be_idx, bo);
+        }
+	WS_Release(wrk->aws, 0);
+	udir_unlock(vd);
 	return (be);
 }
 

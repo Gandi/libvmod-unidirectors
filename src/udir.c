@@ -224,20 +224,14 @@ udir_any_healthy(struct vmod_unidirectors_director *vd, const struct busyobj *bo
 }
 
 VCL_BACKEND
-udir_pick_be(struct vmod_unidirectors_director *vd, double w, struct worker *wrk,
+udir_pick_be(struct vmod_unidirectors_director *vd, double w, unsigned *be_idx,
 	     struct busyobj *bo)
 {
 	unsigned u, h, n_backend = 0;
 	double a, tw = 0.0;
-	unsigned *be_idx;
 	VCL_BACKEND be;
 
-	udir_rdlock(vd);
-	if (!WS_Reserve(wrk->aws, vd->n_backend * sizeof(*be_idx))) {
-		udir_unlock(vd);
-		return (NULL);
-	}
-	be_idx = (void*)wrk->aws->f;
+	AN(be_idx);
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
@@ -261,8 +255,6 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, struct worker *wrk
 			}
 		}
 	}
-	WS_Release(wrk->aws, 0);
-	udir_unlock(vd);
 	return (be);
 }
 

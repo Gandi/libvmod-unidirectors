@@ -82,8 +82,9 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 	struct SHA256Context sha_ctx;
 	const char *p;
 	unsigned char sha256[SHA256_LEN];
-	VCL_BACKEND be;
+	VCL_BACKEND be = NULL;
 	double r;
+	unsigned *be_idx;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
@@ -97,19 +98,22 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 		return (NULL);
 	}
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
+
 	if (!http_GetHdr(bo->bereq, rr->hdr, &p))
 	      p = NULL;
-	udir_unlock(vd);
-
 	SHA256_Init(&sha_ctx);
 	if (p != NULL && *p != '\0')
 	        SHA256_Update(&sha_ctx, p, strlen(p));
 	SHA256_Final(sha256, &sha_ctx);
-
 	r = vbe32dec(sha256);
 	r = scalbn(r, -32);
 	assert(r >= 0 && r <= 1.0);
-	be = udir_pick_be(vd, r, wrk, bo);
+	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
+		be_idx = (void*)wrk->aws->f;
+		be = udir_pick_be(vd, r, be_idx, bo);
+	}
+	WS_Release(wrk->aws, 0);
+	udir_unlock(vd);
 	return (be);
 }
 

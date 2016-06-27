@@ -65,7 +65,7 @@ void udir_add_backend(struct vmod_unidirectors_director*, VCL_BACKEND be, double
 unsigned udir_remove_backend(struct vmod_unidirectors_director*, VCL_BACKEND be);
 unsigned udir_any_healthy(struct vmod_unidirectors_director*, const struct busyobj *,
     double *changed);
-VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, struct worker *wrk, struct busyobj *);
+VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, unsigned *be_idx, struct busyobj *);
 
 VCL_BACKEND udir_vdi_search(const struct director*, const struct suckaddr *sa);
 unsigned udir_vdi_busy(const struct director*, const struct busyobj *bo, double *changed, double *load);

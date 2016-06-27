@@ -70,7 +70,7 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
         struct vmod_director_round_robin *rr;
 	unsigned u, h, n_backend = 0;
 	double tw = 0.0;
-	unsigned *be_idx;
+	unsigned *be_idx = NULL;
 	VCL_BACKEND be;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
@@ -85,22 +85,21 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	}
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 
-	if (!WS_Reserve(wrk->aws, vd->n_backend * sizeof(*be_idx))) {
-		udir_unlock(vd);
-		return (NULL);
-	}
-	be_idx = (void*)wrk->aws->f;
-	for (u = 0; u < vd->n_backend; u++) {
-		be = vd->backend[u];
-		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, bo, NULL)) {
-			be_idx[n_backend++] = u;
-			tw += vd->weight[u];
+	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
+		be_idx = (void*)wrk->aws->f;
+		for (u = 0; u < vd->n_backend; u++) {
+			be = vd->backend[u];
+			CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+			if (be->healthy(be, bo, NULL)) {
+				be_idx[n_backend++] = u;
+				tw += vd->weight[u];
+			}
 		}
 	}
 	be = NULL;
 	if (tw > 0.0) {
 		AZ(pthread_mutex_lock(&rr->mtx));
+		AN(be_idx);
 		h = rr->w * n_backend;
 		u = be_idx[h % n_backend];
 		assert(u < vd->n_backend);
