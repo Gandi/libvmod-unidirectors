@@ -33,7 +33,6 @@
 
 struct vmod_unidirectors_director;
 
-typedef VCL_BACKEND udir_pick_dir_f(struct vmod_unidirectors_director *);
 typedef void udir_fini_f(void **);
 
 /* number of backend per director limit to 256 per default */
@@ -50,9 +49,8 @@ struct vmod_unidirectors_director {
 	double					*weight;
 	struct director				*dir;
 
-        udir_pick_dir_f         *pick_dir;
-        udir_fini_f             *fini;
-        void                    *priv;
+        udir_fini_f				*fini;
+        void					*priv;
 };
 
 void udir_delete_priv(struct vmod_unidirectors_director *vd);

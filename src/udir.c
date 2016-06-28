@@ -347,7 +347,5 @@ vmod_director_backend(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	if (vd->pick_dir)
-	        return (vd->pick_dir(vd));
 	return (vd->dir);
 }
