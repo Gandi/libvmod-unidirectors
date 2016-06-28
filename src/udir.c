@@ -172,23 +172,27 @@ udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 	unsigned u, n;
 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	if (be == NULL)
-		return (vd->n_backend);
-	CHECK_OBJ(be, DIRECTOR_MAGIC);
 	udir_wrlock(vd);
+	if (be == NULL) {
+		u = vd->n_backend;
+		udir_unlock(vd);
+		return (u);
+	}
+	CHECK_OBJ(be, DIRECTOR_MAGIC);
 	for (u = 0; u < vd->n_backend; u++)
 		if (vd->backend[u] == be)
 			break;
 	if (u == vd->n_backend) {
 		udir_unlock(vd);
-		return (vd->n_backend);
+		return (u);
 	}
 	n = (vd->n_backend - u) - 1;
 	memmove(&vd->backend[u], &vd->backend[u+1], n * sizeof(vd->backend[0]));
 	memmove(&vd->weight[u], &vd->weight[u+1], n * sizeof(vd->weight[0]));
 	vd->n_backend--;
+	u = vd->n_backend;
 	udir_unlock(vd);
-	return (vd->n_backend);
+	return (u);
 }
 
 unsigned __match_proto__(vdi_healthy_f)
