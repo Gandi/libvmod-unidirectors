@@ -49,7 +49,7 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 {
 	struct vmod_unidirectors_director *vd;
 	unsigned u;
-	VCL_BACKEND be = NULL;
+	VCL_BACKEND be, rbe = NULL;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
@@ -59,13 +59,13 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, bo, NULL))
+		if (be->healthy(be, bo, NULL)) {
+			rbe = be;
 			break;
+		}
 	}
 	udir_unlock(vd);
-	if (u == vd->n_backend)
-		be = NULL;
-	return (be);
+	return (rbe);
 }
 
 static unsigned __match_proto__(vdi_busy_f)
