@@ -33,8 +33,6 @@
 
 struct vmod_unidirectors_director;
 
-typedef void udir_add_backend_f(struct vmod_unidirectors_director *, VCL_BACKEND, double);
-typedef void udir_remove_backend_f(struct vmod_unidirectors_director *, VCL_BACKEND);
 typedef VCL_BACKEND udir_pick_dir_f(struct vmod_unidirectors_director *);
 typedef void udir_fini_f(void **);
 
@@ -48,8 +46,6 @@ struct vmod_unidirectors_director {
 	double					*weight;
 	struct director				*dir;
 
-        udir_add_backend_f      *add_backend;
-        udir_remove_backend_f   *remove_backend;
         udir_pick_dir_f         *pick_dir;
         udir_fini_f             *fini;
         void                    *priv;
@@ -61,8 +57,6 @@ void udir_delete(struct vmod_unidirectors_director**vdp);
 void udir_rdlock(struct vmod_unidirectors_director*vd);
 void udir_wrlock(struct vmod_unidirectors_director*vd);
 void udir_unlock(struct vmod_unidirectors_director*vd);
-void udir_add_backend(struct vmod_unidirectors_director*, VCL_BACKEND be, double weight);
-unsigned udir_remove_backend(struct vmod_unidirectors_director*, VCL_BACKEND be);
 unsigned udir_any_healthy(struct vmod_unidirectors_director*, const struct busyobj *,
     double *changed);
 VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, unsigned *be_idx, struct busyobj *);

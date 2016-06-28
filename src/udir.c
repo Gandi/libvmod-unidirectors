@@ -91,7 +91,6 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->search = udir_vdi_search;
 	vd->dir->resolve = udir_vdi_resolve;
 
-	vd->add_backend = udir_add_backend;
 	AZ(vd->priv);
 }
 
@@ -147,7 +146,7 @@ udir_unlock(struct vmod_unidirectors_director *vd)
 }
 
 
-void __match_proto__(udir_add_backend_f)
+static void
 udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight)
 {
 	unsigned u;
@@ -164,7 +163,7 @@ udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w
 	udir_unlock(vd);
 }
 
-unsigned
+static unsigned
 udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 {
 	unsigned u, n;
@@ -325,9 +324,7 @@ VCL_VOID __match_proto__()
 vmod_director_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AN(vd->add_backend);
-	(void)(vd->add_backend(vd, be, w));
+	(void)(udir_add_backend(vd, be, w));
 }
 
 VCL_VOID __match_proto__()
