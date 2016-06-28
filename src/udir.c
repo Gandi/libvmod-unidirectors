@@ -89,6 +89,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	AZ(vd->dir->resolve);
 	vd->dir->healthy = udir_vdi_healthy;
 	vd->dir->search = udir_vdi_search;
+	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = udir_vdi_resolve;
 
 	AZ(vd->priv);
