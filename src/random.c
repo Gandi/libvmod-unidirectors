@@ -52,7 +52,7 @@ random_vdi_resolve(const struct director *dir, struct worker *wrk,
 	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be = NULL;
 	double r;
-	unsigned *be_idx;
+	be_idx_t *be_idx;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);

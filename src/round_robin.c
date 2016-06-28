@@ -70,7 +70,7 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
         struct vmod_director_round_robin *rr;
 	unsigned u, h, n_backend = 0;
 	double tw = 0.0;
-	unsigned *be_idx = NULL;
+	be_idx_t *be_idx = NULL;
 	VCL_BACKEND be;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);

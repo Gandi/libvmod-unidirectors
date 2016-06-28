@@ -36,6 +36,10 @@ struct vmod_unidirectors_director;
 typedef VCL_BACKEND udir_pick_dir_f(struct vmod_unidirectors_director *);
 typedef void udir_fini_f(void **);
 
+/* number of backend per director limit to 256 per default */
+typedef uint8_t be_idx_t;
+#define UDIR_MAX_BACKEND (1 << sizeof(be_idx_t) * 8)
+
 struct vmod_unidirectors_director {
 	unsigned				magic;
 #define VMOD_UNIDIRECTORS_DIRECTOR_MAGIC	0x82c52b08
@@ -57,7 +61,7 @@ void udir_wrlock(struct vmod_unidirectors_director*vd);
 void udir_unlock(struct vmod_unidirectors_director*vd);
 unsigned udir_any_healthy(struct vmod_unidirectors_director*, const struct busyobj *,
     double *changed);
-VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, unsigned *be_idx, struct busyobj *);
+VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, be_idx_t *be_idx, struct busyobj *);
 
 VCL_BACKEND udir_vdi_search(const struct director*, const struct suckaddr *sa);
 unsigned udir_vdi_busy(const struct director*, const struct busyobj *bo, double *changed, double *load);

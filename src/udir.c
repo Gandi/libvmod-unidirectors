@@ -145,8 +145,7 @@ udir_unlock(struct vmod_unidirectors_director *vd)
 	AZ(pthread_rwlock_unlock(&vd->mtx));
 }
 
-
-static void
+static unsigned
 udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight)
 {
 	unsigned u;
@@ -154,13 +153,17 @@ udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	AN(be);
 	udir_wrlock(vd);
-	if (vd->n_backend >= vd->l_backend)
-		udir_expand(vd, vd->l_backend + 16);
-	assert(vd->n_backend < vd->l_backend);
-	u = vd->n_backend++;
-	vd->backend[u] = be;
-	vd->weight[u] = weight;
+	if (vd->n_backend < UDIR_MAX_BACKEND) {
+		if (vd->n_backend >= vd->l_backend)
+			udir_expand(vd, vd->l_backend + 16);
+		assert(vd->n_backend < vd->l_backend);
+		u = vd->n_backend++;
+		vd->backend[u] = be;
+		vd->weight[u] = weight;
+	}
+	u = vd->n_backend;
 	udir_unlock(vd);
+	return (u);
 }
 
 static unsigned
@@ -223,7 +226,7 @@ udir_any_healthy(struct vmod_unidirectors_director *vd, const struct busyobj *bo
 }
 
 VCL_BACKEND
-udir_pick_be(struct vmod_unidirectors_director *vd, double w, unsigned *be_idx,
+udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
 	     struct busyobj *bo)
 {
 	unsigned u, h, n_backend = 0;

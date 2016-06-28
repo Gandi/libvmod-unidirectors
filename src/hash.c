@@ -84,7 +84,7 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 	unsigned char sha256[SHA256_LEN];
 	VCL_BACKEND be = NULL;
 	double r;
-	unsigned *be_idx;
+	be_idx_t *be_idx;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
