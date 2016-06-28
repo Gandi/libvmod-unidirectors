@@ -68,7 +68,7 @@ udir_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (NULL);
 }
 
-void
+static void
 udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 {
 	struct vmod_unidirectors_director *vd;
@@ -104,7 +104,7 @@ udir_delete_priv(struct vmod_unidirectors_director *vd)
 	AZ(vd->priv);
 }
 
-void
+static void
 udir_delete(struct vmod_unidirectors_director **vdp)
 {
 	struct vmod_unidirectors_director *vd;
