@@ -42,7 +42,7 @@ vmod_backend_type(VRT_CTX, VCL_BACKEND be)
 	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 	return (be->name);
 }
-
+/*
 VCL_BACKEND __match_proto__()
 vmod_search_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 {
@@ -52,7 +52,7 @@ vmod_search_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 	        return (be->search(be, sa));
 	return (NULL);
 }
-
+*/
 VCL_BOOL __match_proto__()
 vmod_is_backend(VRT_CTX, VCL_BACKEND be)
 {

@@ -149,7 +149,7 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 
 	vd->fini = vmod_hash_fini;
 	vd->dir->name = "hash";
-	vd->dir->busy = udir_vdi_busy;
+	//	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = hash_vdi_resolve;
 
 	udir_unlock(vd);

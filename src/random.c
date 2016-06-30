@@ -81,7 +81,7 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	udir_delete_priv(vd);
 
 	vd->dir->name = "random";
-	vd->dir->busy = udir_vdi_busy;
+	//	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = random_vdi_resolve;
 
 	udir_unlock(vd);

@@ -88,8 +88,8 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->priv = vd;
 	AZ(vd->dir->resolve);
 	vd->dir->healthy = udir_vdi_healthy;
-	vd->dir->search = udir_vdi_search;
-	vd->dir->busy = udir_vdi_busy;
+	//	vd->dir->search = udir_vdi_search;
+	//	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = udir_vdi_resolve;
 
 	AZ(vd->priv);
@@ -264,7 +264,7 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
 	}
 	return (be);
 }
-
+/*
 VCL_BACKEND __match_proto__(vdi_search_f)
 udir_vdi_search(const struct director *dir, const struct suckaddr *sa)
 {
@@ -314,7 +314,7 @@ udir_vdi_busy(const struct director *dir, const struct busyobj *bo,
 	udir_unlock(vd);
 	return (retval);
 }
-
+*/
 VCL_VOID __match_proto__()
 vmod_director__init(VRT_CTX, struct vmod_unidirectors_director **vdp, const char *vcl_name)
 {

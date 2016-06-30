@@ -12,8 +12,7 @@ libvmod_unidirectors_la_SOURCES = \
 	fall_back.c \
 	hash.c \
 	random.c \
-	round_robin.c \
-	least_conn.c
+	round_robin.c
 
 nodist_libvmod_unidirectors_la_SOURCES = \
 	vcc_if.c \

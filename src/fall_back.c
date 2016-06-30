@@ -67,7 +67,7 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	udir_unlock(vd);
 	return (rbe);
 }
-
+/*
 static unsigned __match_proto__(vdi_busy_f)
 fallback_vdi_busy(const struct director *dir, const struct busyobj *bo,
 		  double *changed, double *load)
@@ -96,7 +96,7 @@ fallback_vdi_busy(const struct director *dir, const struct busyobj *bo,
 		*load = l;
 	return (retval);
 }
-
+*/
 VCL_VOID __match_proto__()
 vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
@@ -107,7 +107,7 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 	udir_delete_priv(vd);
 	
 	vd->dir->name = "fallback";
-	vd->dir->busy = fallback_vdi_busy;
+	//	vd->dir->busy = fallback_vdi_busy;
 	vd->dir->resolve = fallback_vdi_resolve;
 
 	udir_unlock(vd);
