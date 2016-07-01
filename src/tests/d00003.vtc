@@ -6,18 +6,18 @@ server s1 {
 	rxreq
 	txresp -hdr "Foo: 3" -body "3"
 	rxreq
+	txresp -hdr "Foo: 4" -body "4"
+	rxreq
+	txresp -hdr "Foo: 6" -body "6"
+	rxreq
+	txresp -hdr "Foo: 8" -body "8"
+	rxreq
 	txresp -hdr "Foo: 9" -body "9"
 } -start
 
 server s2 {
 	rxreq
 	txresp -hdr "Foo: 2" -body "2"
-	rxreq
-	txresp -hdr "Foo: 4" -body "4"
-	rxreq
-	txresp -hdr "Foo: 6" -body "6"
-	rxreq
-	txresp -hdr "Foo: 8" -body "8"
 } -start
 
 varnish v1 -vcl+backend {
@@ -95,16 +95,4 @@ client c1 {
 	txreq
 	rxresp
 	expect resp.http.foo == "2"
-
-	txreq
-	rxresp
-	expect resp.http.foo == "4"
-
-	txreq
-	rxresp
-	expect resp.http.foo == "6"
-
-	txreq
-	rxresp
-	expect resp.http.foo == "8"
 } -run

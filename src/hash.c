@@ -36,31 +36,79 @@
 #include <math.h>
 #include <stdlib.h>
 
+#include <netinet/in.h>
+
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
 #include "vrt.h"
-#include "vsha256.h"
 
 #include "udir.h"
 
 #include "vcc_if.h"
-
-
-static __inline uint32_t
-vbe32dec(const void *pp)
-{
-  uint8_t const *p = (uint8_t const *)pp;
-
-  return (((unsigned)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3]);
-}
-
 
 struct vmod_director_hash {
 	unsigned		    magic;
 #define VMOD_DIRECTOR_HASH_MAGIC    0x1e98af01
         char 			    *hdr;
 };
+
+/* MurmurHash3_32 */
+static inline uint32_t getblock(const uint32_t * p, int i) {
+	return ntohl(p[i]);
+}
+static inline uint32_t rotl32(uint32_t x, int8_t r) {
+	return (x << r) | (x >> (32 - r));
+}
+static inline uint32_t fmix(uint32_t h)
+{
+	h ^= h >> 16;
+	h *= 0x85ebca6b;
+	h ^= h >> 13;
+	h *= 0xc2b2ae35;
+	h ^= h >> 16;
+	return h;
+}
+
+static uint32_t
+MurmurHash3_32(const void *key, int len, uint32_t seed)
+{
+	const uint8_t *data = (const uint8_t *)key;
+	const int nblocks = len / 4;
+
+	uint32_t h1 = seed;
+	uint32_t c1 = 0xcc9e2d51;
+	uint32_t c2 = 0x1b873593;
+
+	const uint32_t *blocks = (const uint32_t *)(data + nblocks*4);
+	for (int i = -nblocks; i; i++) {
+		uint32_t k1 = getblock(blocks, i);
+		k1 *= c1;
+		k1 = rotl32(k1, 15);
+		k1 *= c2;
+		h1 ^= k1;
+		h1 = rotl32(h1, 13);
+		h1 = h1 * 5 + 0xe6546b64;
+	}
+
+	const uint8_t *tail = (const uint8_t*)(data + nblocks*4);
+	uint32_t k1 = 0;
+	switch(len & 3) {
+	case 3: k1 ^= tail[2] << 16;
+	case 2: k1 ^= tail[1] << 8;
+	case 1: k1 ^= tail[0];
+		k1 *= c1;
+		k1 = rotl32(k1, 15);
+		k1 *= c2;
+		h1 ^= k1;
+	};
+
+	h1 ^= len;
+	h1 = fmix(h1);
+
+	return h1;
+}
+/* MurmurHash3_32 */
 
 static void __match_proto__(udir_fini_f)
 vmod_hash_fini(void **ppriv)
@@ -79,11 +127,9 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 {
         struct vmod_unidirectors_director *vd;
 	struct vmod_director_hash *rr;
-	struct SHA256Context sha_ctx;
 	const char *p;
-	unsigned char sha256[SHA256_LEN];
 	VCL_BACKEND be = NULL;
-	double r;
+	double r = 0.0;
 	be_idx_t *be_idx;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
@@ -98,15 +144,10 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 		return (NULL);
 	}
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
-
-	if (!http_GetHdr(bo->bereq, rr->hdr, &p))
-	      p = NULL;
-	SHA256_Init(&sha_ctx);
-	if (p != NULL && *p != '\0')
-	        SHA256_Update(&sha_ctx, p, strlen(p));
-	SHA256_Final(sha256, &sha_ctx);
-	r = vbe32dec(sha256);
-	r = scalbn(r, -32);
+	if (http_GetHdr(bo->bereq, rr->hdr, &p)) {
+		r = MurmurHash3_32(p, strlen(p), 0);
+		r = scalbn(r, -32);
+	}
 	assert(r >= 0 && r <= 1.0);
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
 		be_idx = (void*)wrk->aws->f;
