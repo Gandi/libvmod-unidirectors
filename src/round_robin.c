@@ -69,7 +69,7 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	struct vmod_unidirectors_director *vd;
         struct vmod_director_round_robin *rr;
 	unsigned u, h, n_backend = 0;
-	double tw = 0.0;
+	double w, tw = 0.0;
 	be_idx_t *be_idx = NULL;
 	VCL_BACKEND be;
 
@@ -98,14 +98,14 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	}
 	be = NULL;
 	if (tw > 0.0) {
-		AZ(pthread_mutex_lock(&rr->mtx));
 		AN(be_idx);
-		h = rr->w * n_backend;
-		u = be_idx[h % n_backend];
+		AZ(pthread_mutex_lock(&rr->mtx));
+		w = rr->w;
+		w -= (unsigned) w;
+		h = w * n_backend;
+		u = be_idx[h];
 		assert(u < vd->n_backend);
-		rr->w += (1.0 - vd->weight[u] / tw);
-		if (rr->w >= n_backend)
-			rr->w -= n_backend;
+		rr->w = w + (1.0 - vd->weight[u] / tw);
 		AZ(pthread_mutex_unlock(&rr->mtx));
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
