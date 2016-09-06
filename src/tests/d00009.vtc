@@ -23,9 +23,9 @@ varnish v1 -vcl+backend {
 		if (req.url == "/round_robin") {
 			udir.round_robin();
 		}
-		if (req.url == "/leastconn") {
-			udir.leastconn();
-		}
+#		if (req.url == "/leastconn") {
+#			udir.leastconn();
+#		}
 		if (req.url == "/hash") {
 			udir.hash("client-identity");
 		}
@@ -58,10 +58,10 @@ client c1 {
 	rxresp
 	expect resp.status == 200
 	expect resp.http.director == "round-robin"
-	txreq -url "/leastconn"
-	rxresp
-	expect resp.status == 200
-	expect resp.http.director == "least-connections"
+#	txreq -url "/leastconn"
+#	rxresp
+#	expect resp.status == 200
+#	expect resp.http.director == "least-connections"
 	txreq -url "/hash"
 	rxresp
 	expect resp.status == 200
