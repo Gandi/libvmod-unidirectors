@@ -40,6 +40,7 @@
 #include "cache/cache_director.h"
 
 #include "vrt.h"
+#include "vrnd.h"
 
 #include "udir.h"
 
@@ -60,7 +61,7 @@ random_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
-	r = scalbn(random(), -31);
+	r = scalbn(VRND_RandomTestable(), -31);
 	assert(r >= 0 && r < 1.0);
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
 		be_idx = (void*)wrk->aws->f;
