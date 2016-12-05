@@ -136,7 +136,7 @@ Description
 	A weight based on number of connections is used on tcp backend.
 	The slow start optional parameter is defined in seconds.
 
-	WARNING: need vdi_busy patch for Varnish
+	WARNING: need unidirectors patch for Varnish (for vdi_uptime_f)
 
 Example
 	udir.leastconn(30);
@@ -167,12 +167,12 @@ Description
 Example
 	set req.backend_hint = udir.backend();
 
-$Function BACKEND search_backend(BACKEND, IP)
+$Function BACKEND find_backend(BACKEND, IP)
 
 Description
 	Pick a backend matching the IP from the director.
 
-	WARNING: need vdi_search patch for Varnish
+	WARNING: need unidirector patch for Varnish (for vdi_find_f)
 
 Example
 	set req.backend_hint = unidirectors.search(udir.backend(), client.ip);
@@ -182,7 +182,7 @@ $Function BOOL is_backend(BACKEND)
 Description
 	Test if we have a backend (healthy or not).
 	Useful to authorise the backends to PURGE itself.
-Exemple
+Example
 	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
 	    	return (synth(405));
 	}
@@ -191,5 +191,5 @@ $Function STRING backend_type(BACKEND)
 
 Description
 	Return the type of the backend.
-Exemple
+Example
 	set beresp.http.director = unidirectors.backend_type(bereq.backend);

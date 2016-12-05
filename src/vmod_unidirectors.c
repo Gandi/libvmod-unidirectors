@@ -44,12 +44,12 @@ vmod_backend_type(VRT_CTX, VCL_BACKEND be)
 }
 
 VCL_BACKEND __match_proto__()
-vmod_search_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
+vmod_find_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-	if (be->search)
-	        return (be->search(be, sa));
+	if (be->find)
+	        return (be->find(be, sa));
 	return (NULL);
 }
 

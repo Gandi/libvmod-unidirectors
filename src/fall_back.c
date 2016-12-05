@@ -68,8 +68,8 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (rbe);
 }
 
-static unsigned __match_proto__(vdi_busy_f)
-fallback_vdi_busy(const struct director *dir, const struct busyobj *bo,
+static unsigned __match_proto__(vdi_uptime_f)
+fallback_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 		  double *changed, double *load)
 {
 	unsigned u;
@@ -84,8 +84,8 @@ fallback_vdi_busy(const struct director *dir, const struct busyobj *bo,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		AN(be->busy);
-		retval = be->busy(be, bo, &c, &l);
+		AN(be->uptime);
+		retval = be->uptime(be, bo, &c, &l);
 		if (retval)
 			break;
 	}
@@ -107,7 +107,7 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd)
 	udir_delete_priv(vd);
 	
 	vd->dir->name = "fallback";
-	vd->dir->busy = fallback_vdi_busy;
+	vd->dir->uptime = fallback_vdi_uptime;
 	vd->dir->resolve = fallback_vdi_resolve;
 
 	udir_unlock(vd);

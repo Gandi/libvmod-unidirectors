@@ -77,30 +77,33 @@ CONTENTS
 * :ref:`func_director.random`
 * :ref:`func_director.remove_backend`
 * :ref:`func_director.round_robin`
+* :ref:`func_find_backend`
 * :ref:`func_is_backend`
-* :ref:`func_search_backend`
 
 .. _obj_director:
 
-Object director
-===============
+director
+--------
 
+::
+
+	new OBJ = director()
 
 Description
 	Create a raw director.
 
 	You need to set a load balancing method before to use it.
 
-Example::
-
+Example
 	new udir = unidirectors.director()
 
 .. _func_director.round_robin:
 
-VOID director.round_robin()
----------------------------
+director.round_robin
+--------------------
 
-Prototype
+::
+
 	VOID director.round_robin()
 
 Description
@@ -109,16 +112,16 @@ Description
 	This director will pick backends in a round robin fashion
 	according to weight.
 
-Example::
-
+Example
 	udir.round_robin();
 
 .. _func_director.fallback:
 
-VOID director.fallback()
-------------------------
+director.fallback
+-----------------
 
-Prototype
+::
+
 	VOID director.fallback()
 
 Description
@@ -127,37 +130,16 @@ Description
 	A fallback director will try each of the added backends in turn,
 	and return the first one that is healthy.
 
-Example::
-
+Example
 	udir.fallback();
-
-.. _func_director.leastconn:
-
-VOID director.leastconn(INT)
-----------------------------
-
-Prototype
-	VOID director.leastconn(INT slow_start)
-
-Description
-	Configure a director as least connections.
-
-	The director chooses the less busy backend server.
-	A weight based on number of connections is used on tcp backend.
-	The slow start optional parameter is defined in seconds.
-
-	WARNING: need vdi_busy patch for Varnish
-
-Example::
-
-	udir.leastconn(30);
 
 .. _func_director.random:
 
-VOID director.random()
-----------------------
+director.random
+---------------
 
-Prototype
+::
+
 	VOID director.random()
 
 Description
@@ -166,17 +148,17 @@ Description
 	The random director distributes load over the backends using
 	a weighted random probability distribution.
 
-Example::
-
+Example
 	udir.random();
 
 .. _func_director.hash:
 
-VOID director.hash(STRING)
---------------------------
+director.hash
+-------------
 
-Prototype
-	VOID director.hash(STRING hdr)
+::
+
+	VOID director.hash(STRING hdr="")
 
 Description
 	Configure a director as hash.
@@ -187,110 +169,125 @@ Description
 	Commonly used with ``client.ip`` or a session cookie to get
 	sticky sessions.
 
-Example::
-
+Example
 	udir.hash("client-identity");
 	set req.http.client-identity = client.ip;
 
+.. _func_director.leastconn:
+
+director.leastconn
+------------------
+
+::
+
+	VOID director.leastconn(INT slow_start=0)
+
+Description
+	Configure a director as least connections.
+
+	The director chooses the less busy backend server.
+	A weight based on number of connections is used on tcp backend.
+	The slow start optional parameter is defined in seconds.
+
+	WARNING: need unidirectors patch for Varnish (for vdi_uptime_f)
+
+Example
+	udir.leastconn(30);
+
 .. _func_director.add_backend:
 
-VOID director.add_backend(BACKEND, REAL)
-----------------------------------------
+director.add_backend
+--------------------
 
-Prototype
-	VOID director.add_backend(BACKEND, REAL weight)
+::
+
+	VOID director.add_backend(BACKEND, REAL weight=1.0)
 
 Description
 	Add a backend to the director with an optional weight.
 
 	1.0 is the defaut value.
 
-Example::
-
+Example
 	udir.add_backend(backend1);
 	udir.add_backend(backend2, 2.0);
 
 .. _func_director.remove_backend:
 
-VOID director.remove_backend(BACKEND)
--------------------------------------
+director.remove_backend
+-----------------------
 
-Prototype
+::
+
 	VOID director.remove_backend(BACKEND)
 
 Description
 	Remove a backend from the director.
-
-Example::
-
+Example
 	udir.remove_backend(backend1);
 	udir.remove_backend(backend2);
 
 .. _func_director.backend:
 
-BACKEND director.backend()
---------------------------
+director.backend
+----------------
 
-Prototype
+::
+
 	BACKEND director.backend()
 
 Description
 	Pick a backend from the director.
-
-Example::
-
+Example
 	set req.backend_hint = udir.backend();
 
-.. _func_search_backend:
+.. _func_find_backend:
 
-BACKEND search_backend(BACKEND, IP)
------------------------------------
+find_backend
+------------
 
-Prototype
-	BACKEND search_backend(BACKEND, IP)
+::
+
+	BACKEND find_backend(BACKEND, IP)
 
 Description
 	Pick a backend matching the IP from the director.
 
-	WARNING: need vdi_search patch for Varnish
+	WARNING: need unidirector patch for Varnish (for vdi_find_f)
 
-Example::
-
-	set req.backend_hint = unidirectors.search_backend(udir.backend(), client.ip);
+Example
+	set req.backend_hint = unidirectors.search(udir.backend(), client.ip);
 
 .. _func_is_backend:
 
-BOOL is_backend(BACKEND)
---------------------------
+is_backend
+----------
 
-Prototype
+::
+
 	BOOL is_backend(BACKEND)
 
 Description
 	Test if we have a backend (healthy or not).
 	Useful to authorise the backends to PURGE itself.
-	
-Example::
-
+Example
 	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
 	    	return (synth(405));
 	}
 
 .. _func_backend_type:
 
-STRING backend_type(BACKEND)
-----------------------------
+backend_type
+------------
 
-Prototype
+::
+
 	STRING backend_type(BACKEND)
 
 Description
 	Return the type of the backend.
-
-Example::
-
+Example
 	set beresp.http.director = unidirectors.backend_type(bereq.backend);
-
 
 INSTALLATION
 ============
@@ -304,8 +301,8 @@ the necessary paths.
 
 Pre-requisites::
 
- WARNING: search_backend and leastconn method need Varnish patchs
- see https://github.com/ehocdet/varnish-cache/tree/4.1-unidirector
+ WARNING: find_backend and leastconn method need Varnish patchs
+ see https://github.com/ehocdet/varnish-cache/tree/5.0-unidirector
 
  sudo apt-get install -y autotools-dev make automake libtool pkg-config libvarnishapi1 libvarnishapi-dev
 

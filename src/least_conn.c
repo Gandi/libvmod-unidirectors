@@ -83,8 +83,8 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		AN(be->busy);
-		if (be->busy(be, bo, &changed, &load)) {
+		AN(be->uptime);
+		if (be->uptime(be, bo, &changed, &load)) {
 			delta_t = now - changed;
 			if (delta_t < 0)
 				delta_t = 0.0;
@@ -119,7 +119,7 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 
 	vd->fini = vmod_lc_fini;
 	vd->dir->name = "least-connections";
-	vd->dir->busy = udir_vdi_busy;
+	vd->dir->uptime = udir_vdi_uptime;
 	vd->dir->resolve = lc_vdi_resolve;
 
 	udir_unlock(vd);

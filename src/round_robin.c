@@ -133,7 +133,7 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 
 	vd->fini = vmod_rr_fini;
 	vd->dir->name = "round-robin";
-	vd->dir->busy = udir_vdi_busy;
+	vd->dir->uptime = udir_vdi_uptime;
 	vd->dir->resolve = rr_vdi_resolve;
 
 	udir_unlock(vd);

@@ -88,8 +88,8 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->priv = vd;
 	AZ(vd->dir->resolve);
 	vd->dir->healthy = udir_vdi_healthy;
-	vd->dir->search = udir_vdi_search;
-	vd->dir->busy = udir_vdi_busy;
+	vd->dir->find = udir_vdi_find;
+	vd->dir->uptime = udir_vdi_uptime;
 	vd->dir->resolve = udir_vdi_resolve;
 
 	AZ(vd->priv);
@@ -265,8 +265,8 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
 	return (be);
 }
 
-VCL_BACKEND __match_proto__(vdi_search_f)
-udir_vdi_search(const struct director *dir, const struct suckaddr *sa)
+VCL_BACKEND __match_proto__(vdi_find_f)
+udir_vdi_find(const struct director *dir, const struct suckaddr *sa)
 {
         unsigned u;
 	struct vmod_unidirectors_director *vd;
@@ -277,15 +277,15 @@ udir_vdi_search(const struct director *dir, const struct suckaddr *sa)
 	for (u = 0; u < vd->n_backend && rbe == NULL; u++) {
 	        be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->search)
-		        rbe = be->search(be, sa);
+		if (be->find)
+		        rbe = be->find(be, sa);
 	}
 	udir_unlock(vd);
 	return (rbe);
 }
 
-unsigned __match_proto__(vdi_busy_f)
-udir_vdi_busy(const struct director *dir, const struct busyobj *bo,
+unsigned __match_proto__(vdi_uptime_f)
+udir_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	       double *changed, double *load)
 {
 	unsigned u, h;
@@ -303,8 +303,8 @@ udir_vdi_busy(const struct director *dir, const struct busyobj *bo,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		AN(be->busy);
-		h = be->busy(be, bo, &c, &l);
+		AN(be->uptime);
+		h = be->uptime(be, bo, &c, &l);
 		retval |= h;
 		if (changed != NULL && c > *changed)
 			*changed = c;
