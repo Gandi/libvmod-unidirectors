@@ -78,7 +78,6 @@ CONTENTS
 * :ref:`func_director.remove_backend`
 * :ref:`func_director.round_robin`
 * :ref:`func_find_backend`
-* :ref:`func_is_backend`
 
 .. _obj_director:
 
@@ -252,26 +251,11 @@ find_backend
 
 Description
 	Pick a backend matching the IP from the director.
+	Useful to authorise the backends to PURGE itself.
 
 	WARNING: need unidirector patch for Varnish (for vdi_find_f)
-
 Example
-	set req.backend_hint = unidirectors.search(udir.backend(), client.ip);
-
-.. _func_is_backend:
-
-is_backend
-----------
-
-::
-
-	BOOL is_backend(BACKEND)
-
-Description
-	Test if we have a backend (healthy or not).
-	Useful to authorise the backends to PURGE itself.
-Example
-	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
+	if (!unidirectors.find_backend(req.backend_hint, client.ip)) {
 	    	return (synth(405));
 	}
 

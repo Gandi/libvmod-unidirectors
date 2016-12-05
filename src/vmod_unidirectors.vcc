@@ -171,19 +171,11 @@ $Function BACKEND find_backend(BACKEND, IP)
 
 Description
 	Pick a backend matching the IP from the director.
+	Useful to authorise the backends to PURGE itself.
 
 	WARNING: need unidirector patch for Varnish (for vdi_find_f)
-
 Example
-	set req.backend_hint = unidirectors.search(udir.backend(), client.ip);
-
-$Function BOOL is_backend(BACKEND)
-
-Description
-	Test if we have a backend (healthy or not).
-	Useful to authorise the backends to PURGE itself.
-Example
-	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
+	if (!unidirectors.find_backend(req.backend_hint, client.ip)) {
 	    	return (synth(405));
 	}
 
