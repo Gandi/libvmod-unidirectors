@@ -34,6 +34,7 @@
 #include "cache/cache_director.h"
 
 #include "vrt.h"
+#include "vsa.h"
 
 VCL_STRING __match_proto__()
 vmod_backend_type(VRT_CTX, VCL_BACKEND be)
@@ -49,6 +50,6 @@ vmod_find_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 	if (be->find)
-	        return (be->find(be, sa));
+	        return (be->find(be, sa, VSA_Compare_IP));
 	return (NULL);
 }

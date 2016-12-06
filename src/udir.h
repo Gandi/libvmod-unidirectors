@@ -61,6 +61,7 @@ unsigned udir_any_healthy(struct vmod_unidirectors_director*, const struct busyo
     double *changed);
 VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, be_idx_t *be_idx, struct busyobj *);
 
-VCL_BACKEND udir_vdi_find(const struct director*, const struct suckaddr *sa);
+VCL_BACKEND udir_vdi_find(const struct director*, const struct suckaddr *sa,
+			  int (*cmp)(const struct suckaddr *, const struct suckaddr *));
 unsigned udir_vdi_uptime(const struct director*, const struct busyobj *bo, double *changed, double *load);
 unsigned udir_vdi_healthy(const struct director *, const struct busyobj *bo, double *changed);
