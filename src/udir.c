@@ -266,7 +266,8 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
 }
 
 VCL_BACKEND __match_proto__(vdi_find_f)
-udir_vdi_find(const struct director *dir, const struct suckaddr *sa)
+udir_vdi_find(const struct director *dir, const struct suckaddr *sa,
+	      int (*cmp)(const struct suckaddr *, const struct suckaddr *))
 {
         unsigned u;
 	struct vmod_unidirectors_director *vd;
@@ -278,7 +279,7 @@ udir_vdi_find(const struct director *dir, const struct suckaddr *sa)
 	        be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		if (be->find)
-		        rbe = be->find(be, sa);
+		        rbe = be->find(be, sa, cmp);
 	}
 	udir_unlock(vd);
 	return (rbe);
