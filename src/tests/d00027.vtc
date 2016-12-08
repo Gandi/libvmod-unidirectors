@@ -1,0 +1,82 @@
+varnishtest "Sticky fallback director"
+
+server s1 {
+       rxreq
+       expect req.url == "/qux"
+       txresp
+} -start
+
+server s2 {
+       rxreq
+       expect req.url == "/foo"
+       txresp
+
+       rxreq
+       expect req.url == "/fop"
+       txresp
+} -start
+
+server s3 {
+       rxreq
+       expect req.url == "/bar"
+       txresp
+
+       rxreq
+       expect req.url == "/baz"
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import unidirectors from "${vmod_topbuild}/src/.libs/libvmod_unidirectors.so";
+
+	sub vcl_init {
+	    	new udir = unidirectors.director();
+		udir.fallback(sticky = true);
+	   	udir.add_backend(s1);
+		udir.add_backend(s2);
+		udir.add_backend(s3);
+	}
+
+	sub vcl_recv {
+	    	set req.backend_hint = udir.backend();
+		return(pass);
+	}
+
+} -start
+
+varnish v1 -cliok "backend.set_health s1 sick"
+
+client c1 {
+       txreq -url /foo
+       rxresp
+} -run
+
+varnish v1 -cliok "backend.set_health s1 healthy"
+
+client c1 {
+       txreq -url /fop
+       rxresp
+} -run
+
+varnish v1 -cliok "backend.set_health s2 sick"
+
+client c1 {
+       txreq -url /qux
+       rxresp
+} -run
+
+varnish v1 -cliok "backend.set_health s1 sick"
+
+client c1 {
+       txreq -url /bar
+       rxresp
+} -run
+
+varnish v1 -cliok "backend.set_health s1 healthy"
+varnish v1 -cliok "backend.set_health s2 healthy"
+
+client c1 {
+       txreq -url /baz
+       rxresp
+} -run
+
