@@ -90,13 +90,15 @@ Description
 Example
 	udir.round_robin();
 
-$Method VOID .fallback()
+$Method VOID .fallback(BOOL sticky=0)
 
 Description
 	Configure a director as fallback.
 
 	A fallback director will try each of the added backends in turn,
 	and return the first one that is healthy.
+	If sticky is set, the director doesn't go back to a higher priority
+	backend coming back to health.
 
 Example
 	udir.fallback();
