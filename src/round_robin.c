@@ -34,6 +34,7 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <math.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
@@ -71,7 +72,7 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	unsigned u, h, n_backend = 0;
 	double w, tw = 0.0;
 	be_idx_t *be_idx = NULL;
-	VCL_BACKEND be;
+	VCL_BACKEND be, rbe = NULL;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
@@ -96,23 +97,22 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 			}
 		}
 	}
-	be = NULL;
 	if (tw > 0.0) {
+		double i;
 		AN(be_idx);
 		AZ(pthread_mutex_lock(&rr->mtx));
-		w = rr->w;
-		w -= (unsigned) w;
+		w = modf(rr->w, &i);
 		h = w * n_backend;
 		u = be_idx[h];
 		assert(u < vd->n_backend);
 		rr->w = w + (1.0 - vd->weight[u] / tw);
 		AZ(pthread_mutex_unlock(&rr->mtx));
-		be = vd->backend[u];
-		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+		rbe = vd->backend[u];
+		CHECK_OBJ_NOTNULL(rbe, DIRECTOR_MAGIC);
 	}
 	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
-	return (be);
+	return (rbe);
 }
 
 VCL_VOID __match_proto__()
