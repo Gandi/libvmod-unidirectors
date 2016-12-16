@@ -57,6 +57,8 @@ void udir_delete_priv(struct vmod_unidirectors_director *vd);
 void udir_rdlock(struct vmod_unidirectors_director*vd);
 void udir_wrlock(struct vmod_unidirectors_director*vd);
 void udir_unlock(struct vmod_unidirectors_director*vd);
+unsigned _udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be);
+unsigned _udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight);
 unsigned udir_any_healthy(struct vmod_unidirectors_director*, const struct busyobj *,
     double *changed);
 VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, be_idx_t *be_idx, struct busyobj *);

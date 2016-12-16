@@ -147,14 +147,13 @@ udir_unlock(struct vmod_unidirectors_director *vd)
 	AZ(pthread_rwlock_unlock(&vd->mtx));
 }
 
-static unsigned
-udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight)
+unsigned
+_udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight)
 {
 	unsigned u;
 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	AN(be);
-	udir_wrlock(vd);
 	if (vd->n_backend < UDIR_MAX_BACKEND) {
 		if (vd->n_backend >= vd->l_backend)
 			udir_expand(vd, vd->l_backend + 16);
@@ -162,39 +161,30 @@ udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w
 		u = vd->n_backend++;
 		vd->backend[u] = be;
 		vd->weight[u] = weight;
+		return (1);
 	}
-	u = vd->n_backend;
-	udir_unlock(vd);
-	return (u);
+	return (0);
 }
 
-static unsigned
-udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
+unsigned
+_udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 {
 	unsigned u, n;
 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	udir_wrlock(vd);
-	if (be == NULL) {
-		u = vd->n_backend;
-		udir_unlock(vd);
-		return (u);
-	}
+	if (be == NULL)
+		return (0);
 	CHECK_OBJ(be, DIRECTOR_MAGIC);
 	for (u = 0; u < vd->n_backend; u++)
 		if (vd->backend[u] == be)
 			break;
-	if (u == vd->n_backend) {
-		udir_unlock(vd);
-		return (u);
-	}
+	if (u == vd->n_backend)
+		return (0);
 	n = (vd->n_backend - u) - 1;
 	memmove(&vd->backend[u], &vd->backend[u+1], n * sizeof(vd->backend[0]));
 	memmove(&vd->weight[u], &vd->weight[u+1], n * sizeof(vd->weight[0]));
 	vd->n_backend--;
-	u = vd->n_backend;
-	udir_unlock(vd);
-	return (u);
+	return (1);
 }
 
 unsigned __match_proto__(vdi_healthy_f)
@@ -335,14 +325,18 @@ VCL_VOID __match_proto__()
 vmod_director_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	(void)(udir_add_backend(vd, be, w));
+	udir_wrlock(vd);
+	(void)_udir_add_backend(vd, be, w);
+	udir_unlock(vd);
 }
 
 VCL_VOID __match_proto__()
 vmod_director_remove_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-        (void)udir_remove_backend(vd, be);
+	udir_wrlock(vd);
+	(void)_udir_remove_backend(vd, be);
+	udir_unlock(vd);
 }
 
 VCL_BACKEND __match_proto__()
