@@ -80,11 +80,12 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	if (fb->sticky) {
 		be = fb->be;
-		for (u = 0; rbe == NULL && u < vd->n_backend; u++)
+		for (u = 0; u < vd->n_backend; u++)
 			if (be == vd->backend[u]) {
 				CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 				if (be->healthy(be, bo, NULL))
 					rbe = be;
+				break;
 			}
 	}
 	for (u = 0; rbe == NULL && u < vd->n_backend; u++) {
@@ -117,11 +118,12 @@ fallback_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	if (fb->sticky) {
 		be = fb->be;
-		for (u = 0; !retval && u < vd->n_backend; u++)
+		for (u = 0; u < vd->n_backend; u++)
 			if (be == vd->backend[u]) {
 				CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 				AN(be->uptime);
 				retval = be->uptime(be, bo, &c, &l);
+				break;
 			}
 	}
 	for (u = 0; !retval && u < vd->n_backend; u++) {
