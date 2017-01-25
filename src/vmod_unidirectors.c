@@ -53,3 +53,10 @@ vmod_find_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 	        return (be->find(be, sa, VSA_Compare_IP));
 	return (NULL);
 }
+
+VCL_BOOL __match_proto__()
+vmod_is_backend(VRT_CTX, VCL_BACKEND be)
+{
+        CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	return (be != NULL);
+}
