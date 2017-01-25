@@ -87,9 +87,8 @@ Object director
 
 
 Description
-	Create a raw director.
-
-	You need to set a load balancing method before to use it.
+	Create a director. The default load balancing is random.
+	Load balancing method can be changed.
 
 Example::
 

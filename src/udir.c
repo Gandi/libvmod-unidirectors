@@ -41,6 +41,7 @@
 #include "vrt.h"
 
 #include "udir.h"
+#include "vcc_if.h"
 
 static void
 udir_expand(struct vmod_unidirectors_director *vd, unsigned n)
@@ -321,6 +322,7 @@ vmod_director__init(VRT_CTX, struct vmod_unidirectors_director **vdp, const char
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	udir_new(vdp, vcl_name);
+	vmod_director_random(ctx, *vdp);
 }
 
 VCL_VOID __match_proto__()
