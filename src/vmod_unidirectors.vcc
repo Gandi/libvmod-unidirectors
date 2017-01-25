@@ -182,10 +182,11 @@ Example
 $Function BOOL is_backend(BACKEND)
 
 Description
+	Deprecated, is built-in in varnish 5.0.
 	Test if we have a backend (healthy or not).
 	Useful to authorise the backends to PURGE itself.
 Example
-	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
+	if (!unidirectors.search_backend(req.backend_hint, client.ip)) {
 	    	return (synth(405));
 	}
 
