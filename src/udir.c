@@ -288,29 +288,30 @@ unsigned __match_proto__(vdi_busy_f)
 udir_vdi_busy(const struct director *dir, const struct busyobj *bo,
 	       double *changed, double *load)
 {
-	unsigned u, h;
-	double c, l = 0;
+	unsigned u;
+	double sum = 0.0, tw = 0.0;
+	double c, l, tl = 0;
 	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be = NULL;
 	unsigned retval = 0;
 
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
-	if (changed != NULL)
-		*changed = 0;
-	if (load != NULL)
-		*load = 0;
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		AN(be->busy);
-		h = be->busy(be, bo, &c, &l);
-		retval |= h;
-		if (changed != NULL && c > *changed)
-			*changed = c;
-		if (h && load != NULL)
-			*load += l;
+		if (be->busy(be, bo, &c, &l)) {
+			retval = 1;
+			sum += c * vd->weight[u];
+			tw += vd->weight[u];
+			tl += l;
+		}
 	}
+	if (changed != NULL)
+		*changed = (tw > 0.0 ? sum / tw : 0);
+	if (load != NULL)
+		*load = tl;
 	udir_unlock(vd);
 	return (retval);
 }
