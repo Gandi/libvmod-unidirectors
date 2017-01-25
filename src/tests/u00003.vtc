@@ -20,7 +20,7 @@ varnish v1  -vcl {
             	if (req.http.Foo == "self") {
 		   	set req.backend_hint = uself.backend();
 		}
-		if (!unidirectors.is_backend(unidirectors.find_backend(req.backend_hint,client.ip))) {
+		if (!unidirectors.find_backend(req.backend_hint,client.ip)) {
 			return(synth(405));
 		} else {
 			return(synth(200));
