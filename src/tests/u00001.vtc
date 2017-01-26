@@ -13,7 +13,7 @@ varnish v1  -vcl {
 	}
 
 	sub vcl_recv {
-	    	if (req.http.Foo == "raw") {
+		if (req.http.Foo == "random") {
 		        set req.backend_hint = rawdir.backend();
 		}
 		if (req.http.Foo == "hash") {
@@ -27,9 +27,9 @@ varnish v1  -vcl {
 } -start
 
 client c1 {
-       txreq -hdr "Foo: raw"
+       txreq -hdr "Foo: random"
        rxresp
-       expect resp.status == 500
+       expect resp.status == 200
 } -run
 
 client c2 {
