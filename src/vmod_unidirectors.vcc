@@ -183,7 +183,7 @@ $Function BOOL is_backend(BACKEND)
 Description
 	Test if we have a backend (healthy or not).
 	Useful to authorise the backends to PURGE itself.
-Exemple
+Example
 	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
 	    	return (synth(405));
 	}
@@ -192,5 +192,5 @@ $Function STRING backend_type(BACKEND)
 
 Description
 	Return the type of the backend.
-Exemple
+Example
 	set beresp.http.director = unidirectors.backend_type(bereq.backend);
