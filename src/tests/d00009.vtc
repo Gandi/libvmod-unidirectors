@@ -2,7 +2,7 @@ varnishtest "Test dynamic load-balancing method"
 
 
 server s1 {
-	loop 5 {
+	loop 6 {
 		rxreq
 		txresp
 	}
@@ -48,10 +48,6 @@ client c1 {
 	timeout 3
 	txreq -url "/"
 	rxresp
-	expect resp.status == 503
-	expect resp.http.director == "raw"
-	txreq -url "/random"
-	rxresp
 	expect resp.status == 200
 	expect resp.http.director == "random"
 	txreq -url "/round_robin"
@@ -70,4 +66,8 @@ client c1 {
 	rxresp
 	expect resp.status == 200
 	expect resp.http.director == "fallback"
+	txreq -url "/random"
+	rxresp
+	expect resp.status == 200
+	expect resp.http.director == "random"
 } -run

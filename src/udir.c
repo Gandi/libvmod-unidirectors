@@ -41,6 +41,7 @@
 #include "vrt.h"
 
 #include "udir.h"
+#include "vcc_if.h"
 
 static void
 udir_expand(struct vmod_unidirectors_director *vd, unsigned n)
@@ -289,29 +290,30 @@ unsigned __match_proto__(vdi_uptime_f)
 udir_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	       double *changed, double *load)
 {
-	unsigned u, h;
-	double c, l = 0;
+	unsigned u;
+	double sum = 0.0, tw = 0.0;
+	double c, l, tl = 0;
 	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be = NULL;
 	unsigned retval = 0;
 
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
-	if (changed != NULL)
-		*changed = 0;
-	if (load != NULL)
-		*load = 0;
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 		AN(be->uptime);
-		h = be->uptime(be, bo, &c, &l);
-		retval |= h;
-		if (changed != NULL && c > *changed)
-			*changed = c;
-		if (h && load != NULL)
-			*load += l;
+		if (be->uptime(be, bo, &c, &l)) {
+			retval = 1;
+			sum += c * vd->weight[u];
+			tw += vd->weight[u];
+			tl += l;
+		}
 	}
+	if (changed != NULL)
+		*changed = (tw > 0.0 ? sum / tw : 0);
+	if (load != NULL)
+		*load = tl;
 	udir_unlock(vd);
 	return (retval);
 }
@@ -321,6 +323,7 @@ vmod_director__init(VRT_CTX, struct vmod_unidirectors_director **vdp, const char
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	udir_new(vdp, vcl_name);
+	vmod_director_random(ctx, *vdp);
 }
 
 VCL_VOID __match_proto__()
