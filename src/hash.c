@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016 GANDI SAS
+ * Copyright (c) 2016-2017 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -43,9 +43,9 @@
 
 #include "vrt.h"
 
-#include "udir.h"
-
 #include "vcc_if.h"
+#include "udir.h"
+#include "dynamic.h"
 
 struct vmod_director_hash {
 	unsigned		    magic;
@@ -194,4 +194,12 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 	vd->dir->resolve = hash_vdi_resolve;
 
 	udir_unlock(vd);
+}
+
+VCL_VOID __match_proto__()
+vmod_dyndirector_hash(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_STRING hdr)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(dyn, VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC);
+	vmod_director_hash(ctx, dyn->vd, hdr);
 }

@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016 GANDI SAS
+ * Copyright (c) 2016-2017 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -39,7 +39,6 @@
 #include "cache/cache_director.h"
 
 #include "vrt.h"
-
 #include "udir.h"
 #include "vcc_if.h"
 
@@ -92,8 +91,6 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->search = udir_vdi_search;
 	vd->dir->busy = udir_vdi_busy;
 	vd->dir->resolve = udir_vdi_resolve;
-
-	AZ(vd->priv);
 }
 
 void

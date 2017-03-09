@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016 GANDI SAS
+ * Copyright (c) 2016-2017 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -39,9 +39,10 @@
 #include "cache/cache_director.h"
 
 #include "vrt.h"
-#include "vcc_if.h"
 
+#include "vcc_if.h"
 #include "udir.h"
+#include "dynamic.h"
 
 struct vmod_director_fallback {
 	unsigned			magic;
@@ -164,4 +165,12 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BOOL 
 	vd->dir->resolve = fallback_vdi_resolve;
 
 	udir_unlock(vd);
+}
+
+VCL_VOID __match_proto__()
+vmod_dyndirector_fallback(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_BOOL sticky)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(dyn, VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC);
+	vmod_director_fallback(ctx, dyn->vd, sticky);
 }

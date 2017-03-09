@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 GANDI SAS
+ * Copyright (c) 2016-2017 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -39,7 +39,7 @@
 #include "vcc_if.h"
 
 #include "udir.h"
-
+#include "dynamic.h"
 
 struct vmod_director_leastconn {
 	unsigned				magic;
@@ -123,4 +123,12 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 	vd->dir->resolve = lc_vdi_resolve;
 
 	udir_unlock(vd);
+}
+
+VCL_VOID __match_proto__()
+vmod_dyndirector_leastconn(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_INT slow_start)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(dyn, VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC);
+	vmod_director_leastconn(ctx, dyn->vd, slow_start);
 }

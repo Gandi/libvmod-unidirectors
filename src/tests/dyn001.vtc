@@ -1,0 +1,30 @@
+varnishtest "dynamic update"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import unidirectors from "${vmod_topbuild}/src/.libs/libvmod_unidirectors.so";
+
+        sub vcl_init {
+                new ud = unidirectors.dyndirector(port = "${s1_port}");
+		ud.debug(true);
+		ud.fallback();
+		ud.update_IPs("${s1_addr}, 127.0.0.2");
+        }
+
+        sub vcl_recv {
+		set req.backend_hint = ud.backend();
+	}
+} -start
+
+client c1 {
+        txreq
+        rxresp
+        expect resp.status == 200
+} -run
+
+varnish v1 -expect VBE.vcl1.ud(${s1_addr}).req == 1
+varnish v1 -expect VBE.vcl1.ud(127.0.0.2).req == 0
