@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016 GANDI SAS
+ * Copyright (c) 2016-2017 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -42,9 +42,9 @@
 #include "vrt.h"
 #include "vrnd.h"
 
-#include "udir.h"
-
 #include "vcc_if.h"
+#include "udir.h"
+#include "dynamic.h"
 
 static const struct director * __match_proto__(vdi_resolve_f)
 random_vdi_resolve(const struct director *dir, struct worker *wrk,
@@ -86,4 +86,12 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	vd->dir->resolve = random_vdi_resolve;
 
 	udir_unlock(vd);
+}
+
+VCL_VOID __match_proto__()
+vmod_dyndirector_random(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(dyn, VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC);
+	vmod_director_random(ctx, dyn->vd);
 }

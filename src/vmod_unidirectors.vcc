@@ -4,7 +4,7 @@
 #
 # Author: Poul-Henning Kamp <phk@FreeBSD.org>
 #
-# Copyright (c) 2016 GANDI SAS
+# Copyright (c) 2016-2017 GANDI SAS
 # All rights reserved.
 #
 # Author: Emmanuel Hocdet <manu@gandi.net>
@@ -40,6 +40,8 @@ DESCRIPTION
 The module implements a set of load balancing techniques. It's based on
 vmod_directors. The major change is the unification of directors
 type and the ability to change the load balancing method dynamically.
+Dynamic backends is built in with dyndirector, all load balancing method
+is supported.
 
 To enable load balancing you must import this vmod (unidirectors).
 
@@ -168,6 +170,116 @@ Description
 Example
 	set req.backend_hint = udir.backend();
 
+$Object dyndirector(
+	STRING port			= "http",
+	PROBE probe			= 0,
+	DURATION connect_timeout	= 0,
+	DURATION first_byte_timeout	= 0,
+	DURATION between_bytes_timeout	= 0,
+	INT max_connections		= 0)
+Description
+	Create a dynamic director. The default load balancing is random.
+	Load balancing method can be changed.
+	Dyndirector inherit from director object: all director's methods can be used.
+	Dynamic director can manipulate dynamic backends. All dynamic backends are
+	created with the same default values (port, probe, timeouts and max_connections).
+	The uniqueness of dynamic backends is carried by the IP. Inherited backends do
+	not interact with dynamic backends.
+Example
+	new udir = unidirectors.dyndirector()
+
+$Method VOID .round_robin()
+
+Description
+	Configure a dynamic director as round robin.
+Example
+	udir.round_robin();
+
+$Method VOID .fallback(BOOL sticky=0)
+
+Description
+	Configure a dynamic director as fallback.
+Example
+	udir.fallback();
+
+$Method VOID .random()
+
+Description
+	Configure a dynamic director as random.
+Example
+	udir.random();
+
+$Method VOID .hash(STRING hdr="")
+
+Description
+	Configure a dynamic director as hash.
+Example
+	udir.hash("client-identity");
+	set req.http.client-identity = client.ip;
+
+$Method VOID .leastconn(INT slow_start=0)
+
+Description
+	Configure a dynamic director as least connections.
+Example
+	udir.leastconn(30);
+
+$Method VOID .add_IP(STRING ip, REAL weight=1.0)
+
+Description
+	Add a dynamic backend with IP and an optional weight if not already set.
+	It can be removed by update_IPs() or lookup_addr() call.
+Example
+	udir.add_IP("1.2.3.4")
+
+$Method VOID .remove_IP(STRING ip)
+	Remove a dynamic backend with IP.
+Example
+	udir.remove_IP("1.2.3.4")
+
+$Method VOID .update_IPs(STRING)
+
+Description
+	Update dynamic backends with list of IP. It replace old ones, or keep
+	unchanged for same IP. Weight of new backends is set to 1.
+	It will replace dynamic backends create with lookup_addr() until the next
+	lookup call. It will replace dynamic backends create with add_IP().
+Example
+	udir.update_IPs("1.2.3.4, 1.2.3.5");
+
+$Method VOID .lookup_addr(STRING addr, ACL whitelist = 0, DURATION ttl = 3600)
+
+Description
+	Update dynamic backends with DNS lookups with a frequency of ttl.
+	Weight of new backends is set to 1.
+	It will replace dynamic backends create with update_IPs() or add_IP().
+Example
+	udir.lookup_addr("prod.mydomaine.live");
+
+$Method BACKEND .backend()
+
+Description
+	Pick a backend from the dynamic director.
+Example
+	set req.backend_hint = udir.backend();
+
+$Method VOID .add_backend(BACKEND, REAL weight=1.0)
+
+Description
+	Add a backend to the dynamic director with an optional weight.
+	This backend will be ignored by update_IPs() and lookup_addr()
+	and will remain configured until a remove_backend();
+
+$Method VOID .remove_backend(BACKEND)
+
+Description
+	Remove a backend set by add_backend() from the dynamic director.
+
+$Method VOID .debug(BOOL enable=0)
+
+Description
+        Enable or disable debugging for a dynamic director.
+
 $Function BACKEND find_backend(BACKEND, IP)
 
 Description
@@ -195,3 +307,5 @@ Description
 	Return the type of the backend.
 Example
 	set beresp.http.director = unidirectors.backend_type(bereq.backend);
+
+$Event vmod_event

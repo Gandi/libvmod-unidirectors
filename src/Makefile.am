@@ -6,6 +6,7 @@ vmod_LTLIBRARIES = libvmod_unidirectors.la
 libvmod_unidirectors_la_LDFLAGS = -module -export-dynamic -avoid-version -shared
 
 libvmod_unidirectors_la_SOURCES = \
+	dynamic.c \
 	vmod_unidirectors.c \
 	udir.c \
 	udir.h \
