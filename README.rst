@@ -1,15 +1,4 @@
-============
-vmod_unidirectors
-============
-
-----------------------
-Varnish Directors Module
-----------------------
-
-:Date: 2016-03-25
-:Version: 1.0.0
-:Manual section: 3
-
+.. _vmod_unidirectors(3):
 
 =================
 vmod_unidirectors
@@ -19,6 +8,8 @@ vmod_unidirectors
 Varnish Directors Module
 ------------------------
 
+:Date: 2017-03-10
+:Version: 2.0.0
 :Manual section: 3
 
 SYNOPSIS
@@ -35,6 +26,8 @@ DESCRIPTION
 The module implements a set of load balancing techniques. It's based on
 vmod_directors. The major change is the unification of directors
 type and the ability to change the load balancing method dynamically.
+Dynamic backends is built in with dyndirector, all load balancing method
+is supported.
 
 To enable load balancing you must import this vmod (unidirectors).
 
@@ -44,10 +37,9 @@ want to emulate the previous behavior of Varnish 3.0 you can just
 initialize the directors in vcl_init, like this::
 
     sub vcl_init {
-	new udir2 = unidirectors.director();
-	udir2.round_robin();
-	udir2.add_backend(backend1);
-	udir2.add_backend(backend2);
+	new udir2 = unidirectors.dyndirector();
+	udir2.leastconn();
+	udir2.lookup_addr("service1.example.net");
 
 	new udir1 = unidirectors.director();
 	udir1.hash("client-identity");
@@ -77,6 +69,20 @@ CONTENTS
 * :ref:`func_director.random`
 * :ref:`func_director.remove_backend`
 * :ref:`func_director.round_robin`
+* :ref:`obj_dyndirector`
+* :ref:`func_dyndirector.add_IP`
+* :ref:`func_dyndirector.add_backend`
+* :ref:`func_dyndirector.backend`
+* :ref:`func_dyndirector.debug`
+* :ref:`func_dyndirector.fallback`
+* :ref:`func_dyndirector.hash`
+* :ref:`func_dyndirector.leastconn`
+* :ref:`func_dyndirector.lookup_addr`
+* :ref:`func_dyndirector.random`
+* :ref:`func_dyndirector.remove_IP`
+* :ref:`func_dyndirector.remove_backend`
+* :ref:`func_dyndirector.round_robin`
+* :ref:`func_dyndirector.update_IPs`
 * :ref:`func_is_backend`
 * :ref:`func_search_backend`
 
@@ -90,8 +96,7 @@ Description
 	Create a director. The default load balancing is random.
 	Load balancing method can be changed.
 
-Example::
-
+Example
 	new udir = unidirectors.director()
 
 .. _func_director.round_robin:
@@ -108,48 +113,27 @@ Description
 	This director will pick backends in a round robin fashion
 	according to weight.
 
-Example::
-
+Example
 	udir.round_robin();
 
 .. _func_director.fallback:
 
-VOID director.fallback()
-------------------------
+VOID director.fallback(BOOL)
+----------------------------
 
 Prototype
-	VOID director.fallback()
+	VOID director.fallback(BOOL sticky)
 
 Description
 	Configure a director as fallback.
 
 	A fallback director will try each of the added backends in turn,
 	and return the first one that is healthy.
+	If sticky is set, the director doesn't go back to a higher priority
+	backend coming back to health.
 
-Example::
-
+Example
 	udir.fallback();
-
-.. _func_director.leastconn:
-
-VOID director.leastconn(INT)
-----------------------------
-
-Prototype
-	VOID director.leastconn(INT slow_start)
-
-Description
-	Configure a director as least connections.
-
-	The director chooses the less busy backend server.
-	A weight based on number of connections is used on tcp backend.
-	The slow start optional parameter is defined in seconds.
-
-	WARNING: need vdi_busy patch for Varnish
-
-Example::
-
-	udir.leastconn(30);
 
 .. _func_director.random:
 
@@ -165,8 +149,7 @@ Description
 	The random director distributes load over the backends using
 	a weighted random probability distribution.
 
-Example::
-
+Example
 	udir.random();
 
 .. _func_director.hash:
@@ -186,10 +169,29 @@ Description
 	Commonly used with ``client.ip`` or a session cookie to get
 	sticky sessions.
 
-Example::
-
+Example
 	udir.hash("client-identity");
 	set req.http.client-identity = client.ip;
+
+.. _func_director.leastconn:
+
+VOID director.leastconn(INT)
+----------------------------
+
+Prototype
+	VOID director.leastconn(INT slow_start)
+
+Description
+	Configure a director as least connections.
+
+	The director chooses the less busy backend server.
+	A weight based on number of connections is used on tcp backend.
+	The slow start optional parameter is defined in seconds.
+
+	WARNING: need vdi_busy patch for Varnish
+
+Example
+	udir.leastconn(30);
 
 .. _func_director.add_backend:
 
@@ -204,8 +206,7 @@ Description
 
 	1.0 is the defaut value.
 
-Example::
-
+Example
 	udir.add_backend(backend1);
 	udir.add_backend(backend2, 2.0);
 
@@ -219,9 +220,7 @@ Prototype
 
 Description
 	Remove a backend from the director.
-
-Example::
-
+Example
 	udir.remove_backend(backend1);
 	udir.remove_backend(backend2);
 
@@ -235,10 +234,194 @@ Prototype
 
 Description
 	Pick a backend from the director.
-
-Example::
-
+Example
 	set req.backend_hint = udir.backend();
+
+.. _obj_dyndirector:
+
+Object dyndirector
+==================
+
+Description
+	Create a dynamic director. The default load balancing is random.
+	Load balancing method can be changed.
+	Dyndirector inherit from director object: all director's methods can be used.
+	Dynamic director can manipulate dynamic backends. All dynamic backends are
+	created with the same default values (port, probe, timeouts and max_connections).
+	The uniqueness of dynamic backends is carried by the IP. Inherited backends do
+	not interact with dynamic backends.
+Example
+	new udir = unidirectors.dyndirector()
+
+.. _func_dyndirector.round_robin:
+
+VOID dyndirector.round_robin()
+------------------------------
+
+Prototype
+	VOID dyndirector.round_robin()
+
+Description
+	Configure a dynamic director as round robin.
+Example
+	udir.round_robin();
+
+.. _func_dyndirector.fallback:
+
+VOID dyndirector.fallback(BOOL)
+-------------------------------
+
+Prototype
+	VOID dyndirector.fallback(BOOL sticky)
+
+Description
+	Configure a dynamic director as fallback.
+Example
+	udir.fallback();
+
+.. _func_dyndirector.random:
+
+VOID dyndirector.random()
+-------------------------
+
+Prototype
+	VOID dyndirector.random()
+
+Description
+	Configure a dynamic director as random.
+Example
+	udir.random();
+
+.. _func_dyndirector.hash:
+
+VOID dyndirector.hash(STRING)
+-----------------------------
+
+Prototype
+	VOID dyndirector.hash(STRING hdr)
+
+Description
+	Configure a dynamic director as hash.
+Example
+	udir.hash("client-identity");
+	set req.http.client-identity = client.ip;
+
+.. _func_dyndirector.leastconn:
+
+VOID dyndirector.leastconn(INT)
+-------------------------------
+
+Prototype
+	VOID dyndirector.leastconn(INT slow_start)
+
+Description
+	Configure a dynamic director as least connections.
+Example
+	udir.leastconn(30);
+
+.. _func_dyndirector.add_IP:
+
+VOID dyndirector.add_IP(STRING, REAL)
+-------------------------------------
+
+Prototype
+	VOID dyndirector.add_IP(STRING ip, REAL weight)
+
+Description
+	Add a dynamic backend with IP and an optional weight if not already set.
+	It can be removed by update_IPs() or lookup_addr() call.
+Example
+	udir.add_IP("1.2.3.4")
+
+.. _func_dyndirector.remove_IP:
+
+VOID dyndirector.remove_IP(STRING)
+----------------------------------
+
+Prototype
+	VOID dyndirector.remove_IP(STRING ip)
+	Remove a dynamic backend with IP.
+Example
+	udir.remove_IP("1.2.3.4")
+
+.. _func_dyndirector.update_IPs:
+
+VOID dyndirector.update_IPs(STRING)
+-----------------------------------
+
+Prototype
+	VOID dyndirector.update_IPs(STRING)
+
+Description
+	Update dynamic backends with list of IP. It replace old ones, or keep
+	unchanged for same IP. Weight of new backends is set to 1.
+	It will replace dynamic backends create with lookup_addr() until the next
+	lookup call. It will replace dynamic backends create with add_IP().
+Example
+	udir.update_IPs("1.2.3.4, 1.2.3.5");
+
+.. _func_dyndirector.lookup_addr:
+
+VOID dyndirector.lookup_addr(STRING, ACL, DURATION)
+---------------------------------------------------
+
+Prototype
+	VOID dyndirector.lookup_addr(STRING addr, ACL whitelist, DURATION ttl)
+
+Description
+	Update dynamic backends with DNS lookups with a frequency of ttl.
+	Weight of new backends is set to 1.
+	It will replace dynamic backends create with update_IPs() or add_IP().
+Example
+	udir.lookup_addr("prod.mydomaine.live");
+
+.. _func_dyndirector.backend:
+
+BACKEND dyndirector.backend()
+-----------------------------
+
+Prototype
+	BACKEND dyndirector.backend()
+
+Description
+	Pick a backend from the dynamic director.
+Example
+	set req.backend_hint = udir.backend();
+
+.. _func_dyndirector.add_backend:
+
+VOID dyndirector.add_backend(BACKEND, REAL)
+-------------------------------------------
+
+Prototype
+	VOID dyndirector.add_backend(BACKEND, REAL weight)
+
+Description
+	Add a backend to the dynamic director with an optional weight.
+	This backend will be ignored by update_IPs() and lookup_addr()
+	and will remain configured until a remove_backend();
+
+.. _func_dyndirector.remove_backend:
+
+VOID dyndirector.remove_backend(BACKEND)
+----------------------------------------
+
+Prototype
+	VOID dyndirector.remove_backend(BACKEND)
+
+Description
+	Remove a backend set by add_backend() from the dynamic director.
+
+.. _func_dyndirector.debug:
+
+VOID dyndirector.debug(BOOL)
+----------------------------
+
+Prototype
+	VOID dyndirector.debug(BOOL enable)
+
+Description
+        Enable or disable debugging for a dynamic director.
 
 .. _func_search_backend:
 
@@ -253,14 +436,13 @@ Description
 
 	WARNING: need vdi_search patch for Varnish
 
-Example::
-
-	set req.backend_hint = unidirectors.search_backend(udir.backend(), client.ip);
+Example
+	set req.backend_hint = unidirectors.search(udir.backend(), client.ip);
 
 .. _func_is_backend:
 
 BOOL is_backend(BACKEND)
---------------------------
+------------------------
 
 Prototype
 	BOOL is_backend(BACKEND)
@@ -268,9 +450,7 @@ Prototype
 Description
 	Test if we have a backend (healthy or not).
 	Useful to authorise the backends to PURGE itself.
-	
-Example::
-
+Example
 	if (!unidirectors.is_backend(unidirectors.search_backend(req.backend_hint, client.ip))) {
 	    	return (synth(405));
 	}
@@ -285,11 +465,8 @@ Prototype
 
 Description
 	Return the type of the backend.
-
-Example::
-
+Example
 	set beresp.http.director = unidirectors.backend_type(bereq.backend);
-
 
 INSTALLATION
 ============
