@@ -120,6 +120,7 @@ dynamic_add(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, struct suckaddr 
 	vrt.connect_timeout = dyn->connect_timeout;
 	vrt.first_byte_timeout = dyn->first_byte_timeout;
 	vrt.between_bytes_timeout = dyn->between_bytes_timeout;
+	vrt.max_connections = dyn->max_connections;
 
 	switch (af) {
 	case AF_INET:
@@ -618,6 +619,7 @@ vmod_dyndirector__init(VRT_CTX, struct vmod_unidirectors_dyndirector **dynp, con
 	dyn->connect_timeout = connect_timeout;
 	dyn->first_byte_timeout = first_byte_timeout;
 	dyn->between_bytes_timeout = between_bytes_timeout;
+	dyn->max_connections = max_connections;
 }
 
 VCL_VOID __match_proto__()
