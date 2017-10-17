@@ -266,6 +266,7 @@ lookup_thread(void *priv)
 		lookup = VTIM_real();
 		dynamic_timestamp(dns, "Lookup", lookup, 0., 0.);
 
+		/* can take a while, keep a look at dns->active */
 		error = getaddrinfo(dns->addr, dyn->port, &hints, &res);
 
 		results = VTIM_real();
@@ -276,10 +277,12 @@ lookup_thread(void *priv)
 			LOG(&ctx, SLT_Error, dyn, "getaddrinfo %d (%s)",
 			    error, gai_strerror(error));
 		else {
-			dynamic_update(&ctx, dns->dyn, dns->whitelist, res);
-			update = VTIM_real();
-			dynamic_timestamp(dns, "Update", update,
-			    update - lookup, update - results);
+			if (dns->active) {
+				dynamic_update(&ctx, dns->dyn, dns->whitelist, res);
+				update = VTIM_real();
+				dynamic_timestamp(dns, "Update", update,
+						  update - lookup, update - results);
+			}
 			freeaddrinfo(res);
 		}
 
