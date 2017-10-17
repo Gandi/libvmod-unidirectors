@@ -76,7 +76,7 @@
 
 struct dynamic_lookup_head  objects = VTAILQ_HEAD_INITIALIZER(objects);
 
-static struct VSC_C_lck *lck_lookup;
+static struct VSC_lck *lck_lookup;
 
 static unsigned loadcnt = 0;
 
@@ -379,7 +379,7 @@ vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 				lookup_free(ctx, dns);
 			}
 		if (loadcnt == 0)
-			VSM_Free(lck_lookup);
+			Lck_DestroyClass(&lck_lookup);
 		return (0);
 	case VCL_EVENT_WARM:
 		active = 1;
