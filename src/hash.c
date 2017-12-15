@@ -107,7 +107,7 @@ MurmurHash3_32(const void *key, int len, uint32_t seed)
 }
 /* MurmurHash3_32 */
 
-static void __match_proto__(udir_fini_f)
+static void v_matchproto_(udir_fini_f)
 vmod_hash_fini(void **ppriv)
 {
         struct vmod_director_hash *rr;
@@ -118,7 +118,7 @@ vmod_hash_fini(void **ppriv)
 	FREE_OBJ(rr);
 }
 
-static VCL_BACKEND __match_proto__(vdi_resolve_f)
+static VCL_BACKEND v_matchproto_(vdi_resolve_f)
 hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 		  struct busyobj *bo)
 {
@@ -155,7 +155,7 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (be);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hdr)
 {
         unsigned l;
@@ -193,7 +193,7 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 	udir_unlock(vd);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_hash(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_STRING hdr)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);

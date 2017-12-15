@@ -46,7 +46,7 @@ struct vmod_director_leastconn {
 	unsigned				slow_start;
 };
 
-static void __match_proto__(udir_fini_f)
+static void v_matchproto_(udir_fini_f)
 vmod_lc_fini(void **ppriv)
 {
 	struct vmod_director_leastconn *rr;
@@ -57,7 +57,7 @@ vmod_lc_fini(void **ppriv)
 	FREE_OBJ(rr);
 }
 
-static const struct director * __match_proto__(vdi_resolve_f)
+static const struct director * v_matchproto_(vdi_resolve_f)
 lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 		struct busyobj *bo)
 {
@@ -100,7 +100,7 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (rbe);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT slow_start)
 {
 	struct vmod_director_leastconn *rr;
@@ -124,7 +124,7 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 	udir_unlock(vd);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_leastconn(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_INT slow_start)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);

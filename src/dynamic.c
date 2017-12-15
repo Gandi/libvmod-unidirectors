@@ -346,7 +346,7 @@ lookup_start(VRT_CTX, struct dynamic_lookup *dns)
  * VMOD interfaces
  */
 
-int __match_proto__(vmod_event_f)
+int v_matchproto_(vmod_event_f)
 vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
 	struct dynamic_lookup *dns, *dns2;
@@ -447,7 +447,7 @@ vmod_dyndirector_update_IPs(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 	freeaddrinfo(hints.ai_next);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_add_IP(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 			VCL_STRING ip, double w)
 {
@@ -491,7 +491,7 @@ vmod_dyndirector_add_IP(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 	freeaddrinfo(addr);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_remove_IP(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 			VCL_STRING ip)
 {
@@ -574,7 +574,7 @@ VCL_VOID vmod_dyndirector_lookup_addr(VRT_CTX,  struct vmod_unidirectors_dyndire
 	VTAILQ_INSERT_TAIL(&objects, dns, list);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector__init(VRT_CTX, struct vmod_unidirectors_dyndirector **dynp, const char *vcl_name,
 		       VCL_STRING service,
 		       VCL_PROBE probe,
@@ -628,7 +628,7 @@ vmod_dyndirector__init(VRT_CTX, struct vmod_unidirectors_dyndirector **dynp, con
 	dyn->max_connections = max_connections;
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector__fini(struct vmod_unidirectors_dyndirector **dynp)
 {
 	struct backend_ip *b, *b2;
@@ -654,7 +654,7 @@ vmod_dyndirector__fini(struct vmod_unidirectors_dyndirector **dynp)
 }
 
 
-VCL_VOID __match_proto__(td_dynamic_director_debug)
+VCL_VOID v_matchproto_(td_dynamic_director_debug)
 vmod_dyndirector_debug(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
     VCL_BOOL enable)
 {
@@ -662,7 +662,7 @@ vmod_dyndirector_debug(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 	dyn->debug = enable;
 }
 
-VCL_BACKEND __match_proto__()
+VCL_BACKEND v_matchproto_()
 vmod_dyndirector_backend(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -670,7 +670,7 @@ vmod_dyndirector_backend(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn)
 	return (vmod_director_backend(ctx, dyn->vd));
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_add_backend(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 			     VCL_BACKEND be, double w)
 {
@@ -679,7 +679,7 @@ vmod_dyndirector_add_backend(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 	return (vmod_director_add_backend(ctx, dyn->vd, be, w));
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_remove_backend(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 				  VCL_BACKEND be)
 {

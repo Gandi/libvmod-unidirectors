@@ -50,7 +50,7 @@ struct vmod_director_round_robin {
 	double				        w;
 };
 
-static void __match_proto__(udir_fini_f)
+static void v_matchproto_(udir_fini_f)
 vmod_rr_fini(void **ppriv)
 {
         struct vmod_director_round_robin *rr;
@@ -62,7 +62,7 @@ vmod_rr_fini(void **ppriv)
 	FREE_OBJ(rr);
 }
 
-static const struct director * __match_proto__(vdi_resolve_f)
+static const struct director * v_matchproto_(vdi_resolve_f)
 rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 		struct busyobj *bo)
 {
@@ -114,7 +114,7 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (rbe);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
         struct vmod_director_round_robin *rr;
@@ -138,7 +138,7 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 	udir_unlock(vd);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_round_robin(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);

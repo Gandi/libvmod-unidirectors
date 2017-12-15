@@ -44,7 +44,7 @@
 #include "udir.h"
 #include "dynamic.h"
 
-static const struct director * __match_proto__(vdi_resolve_f)
+static const struct director * v_matchproto_(vdi_resolve_f)
 random_vdi_resolve(const struct director *dir, struct worker *wrk,
 		    struct busyobj *bo)
 {
@@ -70,7 +70,7 @@ random_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (be);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -86,7 +86,7 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	udir_unlock(vd);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_random(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);

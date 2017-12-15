@@ -54,7 +54,7 @@ udir_expand(struct vmod_unidirectors_director *vd, unsigned n)
 	vd->l_backend = n;
 }
 
-static const struct director * __match_proto__(vdi_resolve_f)
+static const struct director * v_matchproto_(vdi_resolve_f)
 udir_vdi_resolve(const struct director *dir, struct worker *wrk,
 		 struct busyobj *bo)
 {
@@ -184,7 +184,7 @@ _udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 	return (1);
 }
 
-unsigned __match_proto__(vdi_healthy_f)
+unsigned v_matchproto_(vdi_healthy_f)
 udir_vdi_healthy(const struct director *dir, const struct busyobj *bo, double *changed)
 {
         struct vmod_unidirectors_director *vd;
@@ -253,7 +253,7 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
 	return (be);
 }
 
-VCL_BACKEND __match_proto__(vdi_find_f)
+VCL_BACKEND v_matchproto_(vdi_find_f)
 udir_vdi_find(const struct director *dir, const struct suckaddr *sa,
 	      int (*cmp)(const struct suckaddr *, const struct suckaddr *))
 {
@@ -273,7 +273,7 @@ udir_vdi_find(const struct director *dir, const struct suckaddr *sa,
 	return (rbe);
 }
 
-unsigned __match_proto__(vdi_uptime_f)
+unsigned v_matchproto_(vdi_uptime_f)
 udir_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	       double *changed, double *load)
 {
@@ -305,7 +305,7 @@ udir_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	return (retval);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director__init(VRT_CTX, struct vmod_unidirectors_director **vdp, const char *vcl_name)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -313,13 +313,13 @@ vmod_director__init(VRT_CTX, struct vmod_unidirectors_director **vdp, const char
 	vmod_director_random(ctx, *vdp);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director__fini(struct vmod_unidirectors_director **vdp)
 {
         udir_delete(vdp);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BACKEND be, double w)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -328,7 +328,7 @@ vmod_director_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BA
 	udir_unlock(vd);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director_remove_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -337,7 +337,7 @@ vmod_director_remove_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL
 	udir_unlock(vd);
 }
 
-VCL_BACKEND __match_proto__()
+VCL_BACKEND v_matchproto_()
 vmod_director_backend(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);

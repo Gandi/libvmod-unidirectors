@@ -36,7 +36,7 @@
 
 #include "vsa.h"
 
-VCL_STRING __match_proto__()
+VCL_STRING v_matchproto_()
 vmod_backend_type(VRT_CTX, VCL_BACKEND be)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -44,7 +44,7 @@ vmod_backend_type(VRT_CTX, VCL_BACKEND be)
 	return (be->name);
 }
 
-VCL_BACKEND __match_proto__()
+VCL_BACKEND v_matchproto_()
 vmod_find_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
@@ -54,7 +54,7 @@ vmod_find_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 	return (NULL);
 }
 
-VCL_BOOL __match_proto__()
+VCL_BOOL v_matchproto_()
 vmod_is_backend(VRT_CTX, VCL_BACKEND be)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);

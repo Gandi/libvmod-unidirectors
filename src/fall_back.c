@@ -49,7 +49,7 @@ struct vmod_director_fallback {
 	VCL_BACKEND			be;
 };
 
-static void __match_proto__(udir_fini_f)
+static void v_matchproto_(udir_fini_f)
 vmod_fb_fini(void **ppriv)
 {
 	struct vmod_director_fallback *fb;
@@ -60,7 +60,7 @@ vmod_fb_fini(void **ppriv)
 	FREE_OBJ(fb);
 }
 
-static const struct director * __match_proto__(vdi_resolve_f)
+static const struct director * v_matchproto_(vdi_resolve_f)
 fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
     struct busyobj *bo)
 {
@@ -98,7 +98,7 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (rbe);
 }
 
-static unsigned __match_proto__(vdi_uptime_f)
+static unsigned v_matchproto_(vdi_uptime_f)
 fallback_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 		  double *changed, double *load)
 {
@@ -140,7 +140,7 @@ fallback_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	return (retval);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BOOL sticky)
 {
 	struct vmod_director_fallback *fb;
@@ -165,7 +165,7 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BOOL 
 	udir_unlock(vd);
 }
 
-VCL_VOID __match_proto__()
+VCL_VOID v_matchproto_()
 vmod_dyndirector_fallback(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_BOOL sticky)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
