@@ -34,13 +34,13 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
-#include "vrt.h"
-#include "udir.h"
 #include "vcc_if.h"
+#include "udir.h"
 
 static void
 udir_expand(struct vmod_unidirectors_director *vd, unsigned n)

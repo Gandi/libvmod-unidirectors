@@ -29,11 +29,11 @@
 #include "config.h"
 
 #include <stdlib.h>
+#include <sys/socket.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
-#include "vrt.h"
 #include "vsa.h"
 
 VCL_STRING __match_proto__()

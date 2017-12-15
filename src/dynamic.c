@@ -39,17 +39,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include <string.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 #include "vcl.h"
 #include "vsa.h"
 #include "vtim.h"
-#include "vrt.h"
+#include "vsb.h"
 
+#include "vcc_if.h"
 #include "udir.h"
 #include "dynamic.h"
-#include "vcc_if.h"
 
 #define LOG(ctx, slt, obj, fmt, ...)		\
 	do {					\
