@@ -232,6 +232,8 @@ Example
 	udir.add_IP("1.2.3.4")
 
 $Method VOID .remove_IP(STRING ip)
+
+Description
 	Remove a dynamic backend with IP.
 Example
 	udir.remove_IP("1.2.3.4")
