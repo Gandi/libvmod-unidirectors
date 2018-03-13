@@ -346,17 +346,30 @@ lookup_start(VRT_CTX, struct dynamic_lookup *dns)
  * VMOD interfaces
  */
 
+struct dyn_vsc {
+       unsigned            magic;
+#define DYN_VSC_MAGIC 0xac5ef676
+       struct vsc_seg      *seg;
+};
+
 int v_matchproto_(vmod_event_f)
 vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
 	struct dynamic_lookup *dns, *dns2;
+	struct dyn_vsc *vcl_vsc;
 	unsigned active;
-
-	(void)priv;
 
 	ASSERT_CLI();
 	AN(ctx);
 	AN(ctx->vcl);
+	AN(priv);
+
+	if (priv->priv == NULL) {
+	         ALLOC_OBJ(vcl_vsc, DYN_VSC_MAGIC);
+		 AN(vcl_vsc);
+		 priv->priv = vcl_vsc;
+	} else
+                CAST_OBJ(vcl_vsc, priv->priv, DYN_VSC_MAGIC);
 
 	switch (e) {
 #if HAVE_VCL_EVENT_USE
@@ -365,7 +378,7 @@ vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 #endif
 	case VCL_EVENT_LOAD:
 		if (loadcnt == 0) {
-			lck_lookup = Lck_CreateClass("unidirector.lookup");
+			lck_lookup = Lck_CreateClass(&vcl_vsc->seg, "unidirector.lookup");
 			AN(lck_lookup);
 		}
 		loadcnt++;
@@ -379,8 +392,9 @@ vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 				VTAILQ_REMOVE(&objects, dns, list);
 				lookup_free(ctx, dns);
 			}
-		if (loadcnt == 0)
-			Lck_DestroyClass(&lck_lookup);
+		if (loadcnt == 0) {
+			Lck_DestroyClass(&vcl_vsc->seg);
+		}
 		return (0);
 	case VCL_EVENT_WARM:
 		active = 1;
