@@ -71,6 +71,16 @@ As you can see there is nothing keeping you from manipulating the
 directors elsewhere in VCL. So, you could have VCL code that would
 add more backends to a director when a certain URL is called.
 
+$Function VOID dynamics_number_expected(INT n)
+
+Description
+	Call this one to collapse VSC of next n dynamic backends. This will
+	speedup vcl.load and VSC access. It can be necessary when a lot of
+	dynamic backends are set in vcl_init to avoid vcl.load failing.
+
+Example
+	unidirectors.dynamics_number_expected(10000)
+
 $Object director()
 
 Description

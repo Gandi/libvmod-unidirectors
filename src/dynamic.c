@@ -77,6 +77,7 @@
 
 struct dynamic_lookup_head  objects = VTAILQ_HEAD_INITIALIZER(objects);
 
+static struct vsmw_cluster *vsc_cluster = NULL;
 static struct VSC_lck *lck_lookup;
 
 static unsigned loadcnt = 0;
@@ -136,7 +137,7 @@ dynamic_add(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, struct suckaddr 
 		WRONG("unexpected family");
 	}
 
-	b->be = VRT_new_backend(ctx, &vrt);
+	b->be = VRT_new_backend_clustered(ctx, vsc_cluster, &vrt);
 	AN(b->be);
 	DBG(ctx, dyn, "add-backend %s", b->vcl_name);
 
@@ -394,6 +395,8 @@ vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 			}
 		if (loadcnt == 0) {
 			Lck_DestroyClass(&vcl_vsc->seg);
+			if (vsc_cluster)
+				VRT_VSM_Cluster_Destroy(ctx, &vsc_cluster);
 		}
 		return (0);
 	case VCL_EVENT_WARM:
@@ -586,6 +589,14 @@ VCL_VOID vmod_dyndirector_lookup_addr(VRT_CTX,  struct vmod_unidirectors_dyndire
 	AZ(pthread_cond_init(&dns->cond, NULL));
 
 	VTAILQ_INSERT_TAIL(&objects, dns, list);
+}
+
+VCL_VOID v_matchproto_()
+vmod_dynamics_number_expected(VRT_CTX, VCL_INT n)
+{
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	if (n > 1 && vsc_cluster == NULL)
+	        vsc_cluster = VRT_VSM_Cluster_New(ctx, n * VRT_backend_vsm_need(ctx));
 }
 
 VCL_VOID v_matchproto_()

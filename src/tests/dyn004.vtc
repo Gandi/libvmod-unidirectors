@@ -1,0 +1,43 @@
+varnishtest "dynamic cleanup fails on vcl.discard"
+
+server s1 {
+       rxreq
+       txresp
+} -start
+
+varnish v1 -vcl+backend {
+	import unidirectors from "${vmod_topbuild}/src/.libs/libvmod_unidirectors.so";
+
+        sub vcl_init {
+                unidirectors.dynamics_number_expected(6);
+                new ud = unidirectors.dyndirector(port = "${s1_port}");
+		ud.debug(true);
+		ud.add_IP("${s1_addr}");
+		ud.add_IP("127.0.0.2");
+		ud.add_IP("127.0.0.3");
+		ud.add_IP("127.0.0.4");
+		ud.add_IP("127.0.0.5");
+		ud.add_IP("127.0.0.6");
+        }
+
+        sub vcl_recv {
+		set req.backend_hint = ud.backend();
+	}
+} -start
+
+varnish v1 -cliok "vcl.list"
+varnish v1 -cliok "backend.list"
+
+varnish v1 -vcl+backend { }
+varnish v1 -cliok "vcl.list"
+varnish v1 -cliok "backend.list"
+
+varnish v1 -cliok "vcl.list"
+varnish v1 -cliok "vcl.discard vcl1"
+
+client c1 {
+        txreq
+        rxresp
+} -run
+
+
