@@ -91,6 +91,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->find = udir_vdi_find;
 	vd->dir->uptime = udir_vdi_uptime;
 	vd->dir->resolve = udir_vdi_resolve;
+	vd->dir->admin_health = VDI_AH_HEALTHY;
 }
 
 void
