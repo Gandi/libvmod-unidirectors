@@ -85,6 +85,16 @@ struct dynamic_lookup {
 	volatile unsigned	active;
 };
 
+struct dynamic_backend_vsc {
+	unsigned		magic;
+#define DYNAMIC_BACKEND_VSC_MAGIC        0x091fa66d
+        struct vcl		*vcl;
+        VTAILQ_ENTRY(dynamic_backend_vsc) list;
+        struct vsmw_cluster     *vsc_cluster;
+};
+
 VTAILQ_HEAD(dynamic_lookup_head, dynamic_lookup) objects;
+
+VTAILQ_HEAD(dynamic_backend_vsc_head, dynamic_backend_vsc) dynamic_vsc_clusters;
 
 #endif /* UNIDIRECTORS_DYNAMIC_H */
