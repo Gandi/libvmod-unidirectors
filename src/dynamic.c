@@ -613,6 +613,8 @@ vmod_dynamics_number_expected(VRT_CTX, VCL_INT n)
 		VRT_handling(ctx, VCL_RET_FAIL);
 		return;
 	}
+	if (n < 2)
+		return;
 	VTAILQ_FOREACH(c, &dynamic_vsc_clusters, list)
 	        if (c->vcl == ctx->vcl) {
 			return;
