@@ -79,10 +79,6 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
-	if (vd->fini != vmod_rr_fini) {
-		udir_unlock(vd);
-		return (NULL);
-	}
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
@@ -123,7 +119,7 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	udir_delete_priv(vd);
+	AZ(vd->fini);
 
 	ALLOC_OBJ(rr, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 	vd->priv = rr;

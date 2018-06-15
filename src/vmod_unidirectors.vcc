@@ -39,8 +39,8 @@ DESCRIPTION
 `vmod_unidirectors` enables backend load balancing in Varnish.
 
 The module implements a set of load balancing techniques. It's based on
-vmod_directors. The major change is the unification of directors
-type and the ability to change the load balancing method dynamically.
+vmod_directors. The major change is the unification of directors (load
+balancing method is only a method of an object director).
 Dynamic backends is built in with dyndirector, all load balancing method
 is supported.
 
@@ -84,8 +84,8 @@ Example
 $Object director()
 
 Description
-	Create a director. The default load balancing is random.
-	Load balancing method can be changed.
+	Create a director without load balancing method.
+	Load balancing method must be set.
 
 Example
 	new udir = unidirectors.director()
@@ -188,8 +188,8 @@ $Object dyndirector(
 	DURATION between_bytes_timeout	= 0,
 	INT max_connections		= 0)
 Description
-	Create a dynamic director. The default load balancing is random.
-	Load balancing method can be changed.
+	Create a dynamic director without load balancing method.
+	Load balancing method must be set.
 	Dyndirector inherit from director object: all director's methods can be used.
 	Dynamic director can manipulate dynamic backends. All dynamic backends are
 	created with the same default values (port, probe, timeouts and max_connections).

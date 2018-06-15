@@ -74,8 +74,6 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
-	if (vd->fini != vmod_fb_fini)
-		goto end;
 	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	if (fb->sticky) {
 		be = fb->be;
@@ -93,7 +91,6 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 		if (be->healthy(be, bo, NULL))
 			fb->be = rbe = be;
 	}
- end:
 	udir_unlock(vd);
 	return (rbe);
 }
@@ -149,7 +146,7 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BOOL 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	udir_delete_priv(vd);
+	AZ(vd->fini);
 
 	ALLOC_OBJ(fb, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	vd->priv = fb;

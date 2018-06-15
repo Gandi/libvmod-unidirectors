@@ -77,7 +77,7 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	udir_delete_priv(vd);
+	AZ(vd->fini);
 
 	vd->dir->name = "random";
 	vd->dir->uptime = udir_vdi_uptime;

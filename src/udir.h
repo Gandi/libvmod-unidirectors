@@ -51,7 +51,6 @@ struct vmod_unidirectors_director {
         void					*priv;
 };
 
-void udir_delete_priv(struct vmod_unidirectors_director *vd);
 void udir_rdlock(struct vmod_unidirectors_director*vd);
 void udir_wrlock(struct vmod_unidirectors_director*vd);
 void udir_unlock(struct vmod_unidirectors_director*vd);

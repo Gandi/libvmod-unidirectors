@@ -39,7 +39,6 @@
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
-#include "vcc_if.h"
 #include "udir.h"
 
 static void
@@ -94,16 +93,6 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	vd->dir->admin_health = VDI_AH_HEALTHY;
 }
 
-void
-udir_delete_priv(struct vmod_unidirectors_director *vd)
-{
-	if (vd->fini) {
-	        vd->fini(&vd->priv);
-		vd->fini = NULL;
-	}
-	AZ(vd->priv);
-}
-
 static void
 udir_delete(struct vmod_unidirectors_director **vdp)
 {
@@ -114,7 +103,11 @@ udir_delete(struct vmod_unidirectors_director **vdp)
 	*vdp = NULL;
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
-	udir_delete_priv(vd);
+	if (vd->fini) {
+	        vd->fini(&vd->priv);
+		vd->fini = NULL;
+	}
+	AZ(vd->priv);
 
 	free(vd->backend);
 	free(vd->weight);
@@ -311,7 +304,6 @@ vmod_director__init(VRT_CTX, struct vmod_unidirectors_director **vdp, const char
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	udir_new(vdp, vcl_name);
-	vmod_director_random(ctx, *vdp);
 }
 
 VCL_VOID v_matchproto_()
