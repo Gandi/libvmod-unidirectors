@@ -75,8 +75,8 @@
 	} while (0)
 
 
-struct dynamic_lookup_head  objects = VTAILQ_HEAD_INITIALIZER(objects);
-struct dynamic_backend_vsc_head dynamic_vsc_clusters = VTAILQ_HEAD_INITIALIZER(dynamic_vsc_clusters);
+struct dynamic_lookup_head  unidirectors_objects = VTAILQ_HEAD_INITIALIZER(unidirectors_objects);
+struct dynamic_backend_vsc_head unidirectors_vsc_clusters = VTAILQ_HEAD_INITIALIZER(unidirectors_vsc_clusters);
 
 static struct VSC_lck *lck_lookup;
 
@@ -138,7 +138,7 @@ dynamic_add(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, struct suckaddr 
 	default:
 		WRONG("unexpected family");
 	}
-	VTAILQ_FOREACH(c, &dynamic_vsc_clusters, list)
+	VTAILQ_FOREACH(c, &unidirectors_vsc_clusters, list)
 	        if (c->vcl == ctx->vcl) {
 		        vsc = c->vsc_cluster;
 			break;
@@ -394,15 +394,15 @@ vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 	case VCL_EVENT_DISCARD:
 		assert(loadcnt > 0);
 		loadcnt--;
-		VTAILQ_FOREACH_SAFE(dns, &objects, list, dns2)
+		VTAILQ_FOREACH_SAFE(dns, &unidirectors_objects, list, dns2)
 			if (dns->vcl == ctx->vcl) {
 				assert(dns->active == 0);
-				VTAILQ_REMOVE(&objects, dns, list);
+				VTAILQ_REMOVE(&unidirectors_objects, dns, list);
 				lookup_free(ctx, dns);
 			}
-		VTAILQ_FOREACH_SAFE(c, &dynamic_vsc_clusters, list, c2)
+		VTAILQ_FOREACH_SAFE(c, &unidirectors_vsc_clusters, list, c2)
 			if (c->vcl == ctx->vcl) {
-			        VTAILQ_REMOVE(&dynamic_vsc_clusters, c, list);
+			        VTAILQ_REMOVE(&unidirectors_vsc_clusters, c, list);
 				VRT_VSM_Cluster_Destroy(ctx, &c->vsc_cluster);
 				FREE_OBJ(c);
 			}
@@ -419,7 +419,7 @@ vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 	default:
 		WRONG("Unhandled vmod event");
 	}
-	VTAILQ_FOREACH(dns, &objects, list)
+	VTAILQ_FOREACH(dns, &unidirectors_objects, list)
 		if (dns->vcl == ctx->vcl) {
 			assert(dns->active != active);
 			dns->active = active;
@@ -599,7 +599,7 @@ VCL_VOID vmod_dyndirector_lookup_addr(VRT_CTX,  struct vmod_unidirectors_dyndire
 	Lck_New(&dns->mtx, lck_lookup);
 	AZ(pthread_cond_init(&dns->cond, NULL));
 
-	VTAILQ_INSERT_TAIL(&objects, dns, list);
+	VTAILQ_INSERT_TAIL(&unidirectors_objects, dns, list);
 }
 
 VCL_VOID v_matchproto_()
@@ -615,7 +615,7 @@ vmod_dynamics_number_expected(VRT_CTX, VCL_INT n)
 	}
 	if (n < 2)
 		return;
-	VTAILQ_FOREACH(c, &dynamic_vsc_clusters, list)
+	VTAILQ_FOREACH(c, &unidirectors_vsc_clusters, list)
 	        if (c->vcl == ctx->vcl) {
 			return;
 		}
@@ -623,7 +623,7 @@ vmod_dynamics_number_expected(VRT_CTX, VCL_INT n)
 	AN(c);
 	c->vcl = ctx->vcl;
 	c->vsc_cluster = VRT_VSM_Cluster_New(ctx, n * VRT_backend_vsm_need(ctx));
-	VTAILQ_INSERT_HEAD(&dynamic_vsc_clusters, c, list);
+	VTAILQ_INSERT_HEAD(&unidirectors_vsc_clusters, c, list);
 	return;
 }
 

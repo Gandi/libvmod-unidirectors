@@ -93,8 +93,11 @@ struct dynamic_backend_vsc {
         struct vsmw_cluster     *vsc_cluster;
 };
 
-VTAILQ_HEAD(dynamic_lookup_head, dynamic_lookup) objects;
+VTAILQ_HEAD(dynamic_lookup_head, dynamic_lookup) unidirectors_objects;
+VTAILQ_HEAD(dynamic_backend_vsc_head, dynamic_backend_vsc) unidirectors_vsc_clusters;
 
-VTAILQ_HEAD(dynamic_backend_vsc_head, dynamic_backend_vsc) dynamic_vsc_clusters;
+/* extern to avoid any link confusion */
+extern struct dynamic_lookup_head unidirectors_objects;
+extern struct dynamic_backend_vsc_head unidirectors_vsc_clusters;
 
 #endif /* UNIDIRECTORS_DYNAMIC_H */
