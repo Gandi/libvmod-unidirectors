@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016-2017 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -39,7 +39,6 @@
 #include <netinet/in.h>
 
 #include "cache/cache.h"
-#include "cache/cache_director.h"
 
 #include "udir.h"
 #include "dynamic.h"
@@ -119,9 +118,9 @@ vmod_hash_fini(void **ppriv)
 }
 
 static VCL_BACKEND v_matchproto_(vdi_resolve_f)
-hash_vdi_resolve(const struct director *dir, struct worker *wrk,
-		  struct busyobj *bo)
+hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
+	struct worker *wrk;
         struct vmod_unidirectors_director *vd;
 	struct vmod_director_hash *rr;
 	const char *p;
@@ -129,27 +128,37 @@ hash_vdi_resolve(const struct director *dir, struct worker *wrk,
 	double r = 0.0;
 	be_idx_t *be_idx;
 
-	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
+	wrk = ctx->bo->wrk;
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
-	CHECK_OBJ_ORNULL(bo, BUSYOBJ_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AN(bo->bereq);
+	AN(ctx->bo->bereq);
 
 	udir_rdlock(vd);
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
-	if (http_GetHdr(bo->bereq, rr->hdr, &p)) {
+	if (http_GetHdr(ctx->bo->bereq, rr->hdr, &p)) {
 		r = MurmurHash3_32(p, strlen(p), 0);
 		r = scalbn(r, -32);
 	}
 	assert(r >= 0 && r <= 1.0);
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
 		be_idx = (void*)wrk->aws->f;
-		be = udir_pick_be(vd, r, be_idx, bo);
+		be = udir_pick_be(ctx, vd, r, be_idx);
 	}
 	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
 	return (be);
 }
+
+static const struct vdi_methods hash_methods[1] = {{
+	.magic =		VDI_METHODS_MAGIC,
+	.type =			"hash",
+	.healthy =		udir_vdi_healthy,
+	.resolve =		hash_vdi_resolve,
+	.find =			udir_vdi_find,
+	.uptime =		udir_vdi_uptime,
+}};
 
 VCL_VOID v_matchproto_()
 vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hdr)
@@ -161,7 +170,7 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	AZ(vd->fini);
+	AZ(vd->dir);
 
 	ALLOC_OBJ(rr, VMOD_DIRECTOR_HASH_MAGIC);
 	vd->priv = rr;
@@ -182,9 +191,7 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 	}
 
 	vd->fini = vmod_hash_fini;
-	vd->dir->name = "hash";
-	vd->dir->uptime = udir_vdi_uptime;
-	vd->dir->resolve = hash_vdi_resolve;
+	vd->dir = VRT_AddDirector(ctx, hash_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);
 }

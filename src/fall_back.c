@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016-2017 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -60,9 +60,8 @@ vmod_fb_fini(void **ppriv)
 	FREE_OBJ(fb);
 }
 
-static const struct director * v_matchproto_(vdi_resolve_f)
-fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
-    struct busyobj *bo)
+static VCL_BACKEND v_matchproto_(vdi_resolve_f)
+fallback_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
 	struct vmod_unidirectors_director *vd;
 	struct vmod_director_fallback *fb;
@@ -70,8 +69,6 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	VCL_BACKEND be, rbe = NULL;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
-	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
-	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
 	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
@@ -80,7 +77,7 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 		for (u = 0; u < vd->n_backend; u++)
 			if (be == vd->backend[u]) {
 				CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-				if (be->healthy(be, bo, NULL))
+				if (VRT_Healthy(ctx, be, NULL))
 					rbe = be;
 				break;
 			}
@@ -88,7 +85,7 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 	for (u = 0; rbe == NULL && u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, bo, NULL))
+		if (VRT_Healthy(ctx, be, NULL))
 			fb->be = rbe = be;
 	}
 	udir_unlock(vd);
@@ -96,8 +93,7 @@ fallback_vdi_resolve(const struct director *dir, struct worker *wrk,
 }
 
 static unsigned v_matchproto_(vdi_uptime_f)
-fallback_vdi_uptime(const struct director *dir, const struct busyobj *bo,
-		  double *changed, double *load)
+fallback_vdi_uptime(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed, double *load)
 {
 	unsigned u;
 	unsigned retval = 0;
@@ -109,26 +105,23 @@ fallback_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
-	if (vd->fini != vmod_fb_fini)
-		goto end;
 	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	if (fb->sticky) {
 		be = fb->be;
 		for (u = 0; u < vd->n_backend; u++)
 			if (be == vd->backend[u]) {
 				CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-				AN(be->uptime);
-				retval = be->uptime(be, bo, &c, &l);
+				AN(be->vdir->methods->uptime);
+				retval = be->vdir->methods->uptime(ctx, be, &c, &l);
 				break;
 			}
 	}
 	for (u = 0; !retval && u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		AN(be->uptime);
-		retval = be->uptime(be, bo, &c, &l);
+		AN(be->vdir->methods->uptime);
+		retval = be->vdir->methods->uptime(ctx, be, &c, &l);
 	}
- end:
 	udir_unlock(vd);
 	if (changed != NULL)
 		*changed = c;
@@ -136,6 +129,16 @@ fallback_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 		*load = l;
 	return (retval);
 }
+
+
+static const struct vdi_methods fallback_methods[1] = {{
+	.magic =		VDI_METHODS_MAGIC,
+	.type =			"fallback",
+	.healthy =		udir_vdi_healthy,
+	.resolve =		fallback_vdi_resolve,
+	.find =			udir_vdi_find,
+	.uptime =		fallback_vdi_uptime,
+}};
 
 VCL_VOID v_matchproto_()
 vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BOOL sticky)
@@ -146,18 +149,15 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BOOL 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	AZ(vd->fini);
+	AZ(vd->dir);
 
 	ALLOC_OBJ(fb, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	vd->priv = fb;
 	AN(vd->priv);
 	fb->sticky = sticky;
 	fb->be = NULL;
-
 	vd->fini = vmod_fb_fini;
-	vd->dir->name = "fallback";
-	vd->dir->uptime = fallback_vdi_uptime;
-	vd->dir->resolve = fallback_vdi_resolve;
+	vd->dir = VRT_AddDirector(ctx, fallback_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);
 }

@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016-2017 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -38,7 +38,6 @@
 #include <string.h>
 
 #include "cache/cache.h"
-#include "cache/cache_director.h"
 
 #include "udir.h"
 #include "dynamic.h"
@@ -62,10 +61,10 @@ vmod_rr_fini(void **ppriv)
 	FREE_OBJ(rr);
 }
 
-static const struct director * v_matchproto_(vdi_resolve_f)
-rr_vdi_resolve(const struct director *dir, struct worker *wrk,
-		struct busyobj *bo)
+static VCL_BACKEND v_matchproto_(vdi_resolve_f)
+rr_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
+	struct worker *wrk;
 	struct vmod_unidirectors_director *vd;
         struct vmod_director_round_robin *rr;
 	unsigned u, h, n_backend = 0;
@@ -73,9 +72,10 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	be_idx_t *be_idx = NULL;
 	VCL_BACKEND be, rbe = NULL;
 
-	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
+	wrk = ctx->bo->wrk;
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
-	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
@@ -86,7 +86,7 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 		for (u = 0; u < vd->n_backend; u++) {
 			be = vd->backend[u];
 			CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-			if (be->healthy(be, bo, NULL)) {
+			if (VRT_Healthy(ctx, be, NULL)) {
 				be_idx[n_backend++] = u;
 				tw += vd->weight[u];
 			}
@@ -110,6 +110,15 @@ rr_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (rbe);
 }
 
+static const struct vdi_methods rr_methods[1] = {{
+	.magic =		VDI_METHODS_MAGIC,
+	.type =			"round-robin",
+	.healthy =		udir_vdi_healthy,
+	.resolve =		rr_vdi_resolve,
+	.find =			udir_vdi_find,
+	.uptime =		udir_vdi_uptime,
+}};
+
 VCL_VOID v_matchproto_()
 vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 {
@@ -119,7 +128,7 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	AZ(vd->fini);
+	AZ(vd->dir);
 
 	ALLOC_OBJ(rr, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 	vd->priv = rr;
@@ -127,9 +136,7 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 	AZ(pthread_mutex_init(&rr->mtx, NULL));
 
 	vd->fini = vmod_rr_fini;
-	vd->dir->name = "round-robin";
-	vd->dir->uptime = udir_vdi_uptime;
-	vd->dir->resolve = rr_vdi_resolve;
+	vd->dir = VRT_AddDirector(ctx, rr_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);
 }

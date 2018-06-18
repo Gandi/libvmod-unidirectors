@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017 GANDI SAS
+ * Copyright (c) 2017-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -37,7 +37,7 @@
 struct vmod_unidirectors_director;
 
 struct backend_ip {
-	struct director                 *be;
+	VCL_BACKEND                     be;
 	struct suckaddr 		*ip_suckaddr;
 	char				*ip_addr;
 	char				*vcl_name;
@@ -49,7 +49,6 @@ struct backend_ip {
 struct vmod_unidirectors_dyndirector {
 	unsigned		magic;
 #define VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC	0x0ce092f1
-	char			*vcl_name;
 	struct vmod_unidirectors_director *vd;
 
 	VCL_PROBE		probe;

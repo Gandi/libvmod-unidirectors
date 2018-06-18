@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2017 GANDI SAS
+ * Copyright (c) 2017-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -42,7 +42,7 @@
 #include <string.h>
 
 #include "cache/cache.h"
-#include "cache/cache_director.h"
+
 #include "vcl.h"
 #include "vsa.h"
 #include "vtim.h"
@@ -58,13 +58,13 @@
 			VSLb((ctx)->vsl, slt,	\
 			    "dynamic: %s %s " fmt, \
 			    (obj)->vcl_conf,	\
-			    (obj)->vcl_name,	\
+			    (obj)->vd->vcl_name,	\
 			    __VA_ARGS__);	\
 		else				\
 			VSL(slt, 0,		\
 			    "dynamic: %s %s " fmt, \
 			    (obj)->vcl_conf,	\
-			    (obj)->vcl_name, 	\
+			    (obj)->vd->vcl_name, 	\
 			    __VA_ARGS__);	\
 	} while (0)
 
@@ -111,7 +111,7 @@ dynamic_add(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, struct suckaddr 
 
 	vsb = VSB_new_auto();
 	AN(vsb);
-	VSB_printf(vsb, "%s(%s)", dyn->vcl_name, b->ip_addr);
+	VSB_printf(vsb, "%s(%s)", dyn->vd->vcl_name, b->ip_addr);
 	AZ(VSB_finish(vsb));
 	b->vcl_name = strdup(VSB_data(vsb));
 	AN(b->vcl_name);
@@ -244,7 +244,7 @@ dynamic_timestamp(struct dynamic_lookup *dns, const char *event, double start,
 		  double dfirst, double dprev)
 {
 	VSL(SLT_Timestamp, 0, "vmod-unidirectors %s.%s(%s) %s: %.6f %.6f %.6f",
-	    dns->dyn->vcl_conf, dns->dyn->vcl_name, dns->addr, event, start,
+	    dns->dyn->vcl_conf, dns->dyn->vd->vcl_name, dns->addr, event, start,
 	    dfirst, dprev);
 }
 
@@ -585,7 +585,7 @@ VCL_VOID vmod_dyndirector_lookup_addr(VRT_CTX,  struct vmod_unidirectors_dyndire
 	CHECK_OBJ_ORNULL(whitelist, VRT_ACL_MAGIC);
 
 	if (ctx->method != VCL_MET_INIT) {
-		VSB_printf(ctx->msg, ".lookup_addr only in vcl_init (%s).", dyn->vcl_name);
+		VSB_printf(ctx->msg, ".lookup_addr only in vcl_init (%s).", dyn->vd->vcl_name);
 		VRT_handling(ctx, VCL_RET_FAIL);
 		return;
 	}
@@ -650,11 +650,10 @@ vmod_dyndirector__init(VRT_CTX, struct vmod_unidirectors_dyndirector **dynp, con
 	*dynp = dyn;
 	vmod_director__init(ctx, &dyn->vd, vcl_name);
 	AN(dyn->vd);
-	dyn->vcl_name = dyn->vd->dir->vcl_name; // XXX ?
 	dyn->vcl_conf = VCL_Name(ctx->vcl);
 
 	if (service == NULL || *service == '\0') {
-		VSB_printf(ctx->msg, "Missing dynamic port for %s", dyn->vcl_name);
+		VSB_printf(ctx->msg, "Missing dynamic port for %s", dyn->vd->vcl_name);
 		VRT_handling(ctx, VCL_RET_FAIL);
 	} else {
 		char *endptr;
@@ -665,7 +664,7 @@ vmod_dyndirector__init(VRT_CTX, struct vmod_unidirectors_dyndirector **dynp, con
 				port_i = ntohs(sp->s_port);
 		}
 		if (port_i < 1 || port_i > 65535) {
-			VSB_printf(ctx->msg, "Invalid dynamic port for %s", dyn->vcl_name);
+			VSB_printf(ctx->msg, "Invalid dynamic port for %s", dyn->vd->vcl_name);
 			VRT_handling(ctx, VCL_RET_FAIL);
 		}
 	}

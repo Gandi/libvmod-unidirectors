@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -49,43 +49,40 @@ struct vmod_director_leastconn {
 static void v_matchproto_(udir_fini_f)
 vmod_lc_fini(void **ppriv)
 {
-	struct vmod_director_leastconn *rr;
+	struct vmod_director_leastconn *lc;
 	AN(ppriv);
-	rr = *ppriv;
+	lc = *ppriv;
 	*ppriv = NULL;
-	CHECK_OBJ_NOTNULL(rr, VMOD_DIRECTOR_LEASTCONN_MAGIC);
-	FREE_OBJ(rr);
+	CHECK_OBJ_NOTNULL(lc, VMOD_DIRECTOR_LEASTCONN_MAGIC);
+	FREE_OBJ(lc);
 }
 
-static const struct director * v_matchproto_(vdi_resolve_f)
-lc_vdi_resolve(const struct director *dir, struct worker *wrk,
-		struct busyobj *bo)
+static VCL_BACKEND v_matchproto_(vdi_resolve_f)
+lc_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
 	struct vmod_unidirectors_director *vd;
-	struct vmod_director_leastconn *rr;
+	struct vmod_director_leastconn *lc;
 	unsigned u;
 	double changed, now, delta_t, load, least = INFINITY;
 	VCL_BACKEND be, rbe = NULL;
 
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
-	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
-	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
-	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_LEASTCONN_MAGIC);
+	CAST_OBJ_NOTNULL(lc, vd->priv, VMOD_DIRECTOR_LEASTCONN_MAGIC);
 	now = VTIM_real();
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		AN(be->uptime);
-		if (be->uptime(be, bo, &changed, &load)) {
+		AN(be->vdir->methods->uptime);
+		if (be->vdir->methods->uptime(ctx, be, &changed, &load)) {
 			delta_t = now - changed;
 			if (delta_t < 0)
 				delta_t = 0.0;
 			load = load / vd->weight[u];
-			if (delta_t < rr->slow_start)
-				load = load / delta_t * rr->slow_start;
+			if (delta_t < lc->slow_start)
+				load = load / delta_t * lc->slow_start;
 			if (load <= least) {
 				rbe = be;
 				least = load;
@@ -96,26 +93,33 @@ lc_vdi_resolve(const struct director *dir, struct worker *wrk,
 	return (rbe);
 }
 
+static const struct vdi_methods lc_methods[1] = {{
+	.magic =		VDI_METHODS_MAGIC,
+	.type =			"least-connections",
+	.healthy =		udir_vdi_healthy,
+	.resolve =		lc_vdi_resolve,
+	.find =			udir_vdi_find,
+	.uptime =		udir_vdi_uptime,
+}};
+
 VCL_VOID v_matchproto_()
 vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT slow_start)
 {
-	struct vmod_director_leastconn *rr;
+	struct vmod_director_leastconn *lc;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	AZ(vd->fini);
+	AZ(vd->dir);
 
-	ALLOC_OBJ(rr, VMOD_DIRECTOR_LEASTCONN_MAGIC);
-	vd->priv = rr;
+	ALLOC_OBJ(lc, VMOD_DIRECTOR_LEASTCONN_MAGIC);
+	vd->priv = lc;
 	AN(vd->priv);
-	rr->slow_start = slow_start;
+	lc->slow_start = slow_start;
 
 	vd->fini = vmod_lc_fini;
-	vd->dir->name = "least-connections";
-	vd->dir->uptime = udir_vdi_uptime;
-	vd->dir->resolve = lc_vdi_resolve;
+	vd->dir = VRT_AddDirector(ctx, lc_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);
 }

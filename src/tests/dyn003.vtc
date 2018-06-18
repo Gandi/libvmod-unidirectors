@@ -10,6 +10,7 @@ varnish v1 -vcl+backend {
 
         sub vcl_init {
                 new ud = unidirectors.dyndirector(port = "${s1_port}");
+		ud.random();
 		ud.debug(true);
 		ud.add_IP("${s1_addr}");
         }

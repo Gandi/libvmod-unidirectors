@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2016 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -40,17 +40,21 @@ VCL_STRING v_matchproto_()
 vmod_backend_type(VRT_CTX, VCL_BACKEND be)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	if (be == NULL)
+	       return (NULL);
 	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-	return (be->name);
+	return (be->vdir->methods->type);
 }
 
 VCL_BACKEND v_matchproto_()
 vmod_find_backend(VRT_CTX, VCL_BACKEND be, VCL_IP sa)
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	if (be == NULL)
+	       return (NULL);
 	CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-	if (be->find)
-	        return (be->find(be, sa, VSA_Compare_IP));
+	if (be->vdir->methods->find)
+	       return (be->vdir->methods->find(be, sa, VSA_Compare_IP));
 	return (NULL);
 }
 

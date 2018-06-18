@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016-2017 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -37,25 +37,25 @@
 #include <stdlib.h>
 
 #include "cache/cache.h"
-#include "cache/cache_director.h"
 
 #include "vrnd.h"
 
 #include "udir.h"
 #include "dynamic.h"
 
-static const struct director * v_matchproto_(vdi_resolve_f)
-random_vdi_resolve(const struct director *dir, struct worker *wrk,
-		    struct busyobj *bo)
+static VCL_BACKEND v_matchproto_(vdi_resolve_f)
+random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
+	struct worker *wrk;
 	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be = NULL;
 	double r;
 	be_idx_t *be_idx;
 
-	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
+	wrk = ctx->bo->wrk;
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
-	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
@@ -63,12 +63,21 @@ random_vdi_resolve(const struct director *dir, struct worker *wrk,
 	assert(r >= 0 && r < 1.0);
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
 		be_idx = (void*)wrk->aws->f;
-		be = udir_pick_be(vd, r, be_idx, bo);
+		be = udir_pick_be(ctx, vd, r, be_idx);
         }
 	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
 	return (be);
 }
+
+static const struct vdi_methods random_methods[1] = {{
+	.magic =		VDI_METHODS_MAGIC,
+	.type =			"random",
+	.healthy =		udir_vdi_healthy,
+	.resolve =		random_vdi_resolve,
+	.find =			udir_vdi_find,
+	.uptime =		udir_vdi_uptime,
+}};
 
 VCL_VOID v_matchproto_()
 vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
@@ -77,12 +86,8 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_wrlock(vd);
-	AZ(vd->fini);
-
-	vd->dir->name = "random";
-	vd->dir->uptime = udir_vdi_uptime;
-	vd->dir->resolve = random_vdi_resolve;
-
+	AZ(vd->dir);
+	vd->dir = VRT_AddDirector(ctx, random_methods, vd, "%s", vd->vcl_name);
 	udir_unlock(vd);
 }
 

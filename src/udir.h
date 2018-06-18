@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016-2017 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -45,7 +45,8 @@ struct vmod_unidirectors_director {
 	unsigned				l_backend;
 	VCL_BACKEND				*backend;
 	double					*weight;
-	struct director				*dir;
+	const char				*vcl_name;
+	VCL_BACKEND				dir;
 
         udir_fini_f				*fini;
         void					*priv;
@@ -56,11 +57,9 @@ void udir_wrlock(struct vmod_unidirectors_director*vd);
 void udir_unlock(struct vmod_unidirectors_director*vd);
 unsigned _udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be);
 unsigned _udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight);
-unsigned udir_any_healthy(struct vmod_unidirectors_director*, const struct busyobj *,
-    double *changed);
-VCL_BACKEND udir_pick_be(struct vmod_unidirectors_director*, double w, be_idx_t *be_idx, struct busyobj *);
-
-VCL_BACKEND udir_vdi_find(const struct director*, const struct suckaddr *sa,
+unsigned udir_any_healthy(VRT_CTX, struct vmod_unidirectors_director*, VCL_TIME *changed);
+VCL_BACKEND udir_pick_be(VRT_CTX, struct vmod_unidirectors_director*, double w, be_idx_t *be_idx);
+VCL_BACKEND udir_vdi_find(VCL_BACKEND, const struct suckaddr *sa,
 			  int (*cmp)(const struct suckaddr *, const struct suckaddr *));
-unsigned udir_vdi_uptime(const struct director*, const struct busyobj *bo, double *changed, double *load);
-unsigned udir_vdi_healthy(const struct director *, const struct busyobj *bo, double *changed);
+unsigned udir_vdi_uptime(VRT_CTX, VCL_BACKEND, VCL_TIME *changed, double *load);
+unsigned udir_vdi_healthy(VRT_CTX, VCL_BACKEND, VCL_TIME *changed);

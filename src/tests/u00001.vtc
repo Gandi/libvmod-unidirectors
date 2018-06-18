@@ -7,6 +7,7 @@ varnish v1  -vcl {
 
 	sub vcl_init {
 		new rawdir = unidirectors.director();
+		rawdir.random();
 		new hashdir = unidirectors.director();
 		hashdir.hash("req.http.Foo");
 		hashdir.add_backend(default);

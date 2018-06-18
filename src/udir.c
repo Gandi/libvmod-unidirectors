@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016-2017 GANDI SAS
+ * Copyright (c) 2016-2018 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -53,20 +53,6 @@ udir_expand(struct vmod_unidirectors_director *vd, unsigned n)
 	vd->l_backend = n;
 }
 
-static const struct director * v_matchproto_(vdi_resolve_f)
-udir_vdi_resolve(const struct director *dir, struct worker *wrk,
-		 struct busyobj *bo)
-{
-	struct vmod_unidirectors_director *vd;
-
-	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
-	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
-	CHECK_OBJ_NOTNULL(bo, BUSYOBJ_MAGIC);
-	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-
-	return (NULL);
-}
-
 static void
 udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 {
@@ -79,18 +65,7 @@ udir_new(struct vmod_unidirectors_director **vdp, const char *vcl_name)
 	AN(vd);
 	*vdp = vd;
 	AZ(pthread_rwlock_init(&vd->mtx, NULL));
-
-	ALLOC_OBJ(vd->dir, DIRECTOR_MAGIC);
-	AN(vd->dir);
-	vd->dir->name = "raw";
-	REPLACE(vd->dir->vcl_name, vcl_name);
-	vd->dir->priv = vd;
-	AZ(vd->dir->resolve);
-	vd->dir->healthy = udir_vdi_healthy;
-	vd->dir->find = udir_vdi_find;
-	vd->dir->uptime = udir_vdi_uptime;
-	vd->dir->resolve = udir_vdi_resolve;
-	vd->dir->admin_health = VDI_AH_HEALTHY;
+	vd->vcl_name = vcl_name; // XXX dup ?
 }
 
 static void
@@ -112,8 +87,8 @@ udir_delete(struct vmod_unidirectors_director **vdp)
 	free(vd->backend);
 	free(vd->weight);
 	AZ(pthread_rwlock_destroy(&vd->mtx));
-	free(vd->dir->vcl_name);
-	FREE_OBJ(vd->dir);
+	if (vd->dir)
+	        VRT_DelDirector(&vd->dir);
 	FREE_OBJ(vd);
 }
 
@@ -144,7 +119,9 @@ _udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double 
 	unsigned u;
 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	AN(be);
+	if (be == NULL)
+		return (0);
+	CHECK_OBJ(be, DIRECTOR_MAGIC);
 	if (vd->n_backend < UDIR_MAX_BACKEND) {
 		if (vd->n_backend >= vd->l_backend)
 			udir_expand(vd, vd->l_backend + 16);
@@ -179,15 +156,15 @@ _udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
 }
 
 unsigned v_matchproto_(vdi_healthy_f)
-udir_vdi_healthy(const struct director *dir, const struct busyobj *bo, double *changed)
+udir_vdi_healthy(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed)
 {
         struct vmod_unidirectors_director *vd;
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	return (udir_any_healthy(vd, bo, changed));
+	return (udir_any_healthy(ctx, vd, changed));
 }
 
 unsigned
-udir_any_healthy(struct vmod_unidirectors_director *vd, const struct busyobj *bo, double *changed)
+udir_any_healthy(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_TIME *changed)
 {
 	unsigned retval = 0;
 	VCL_BACKEND be;
@@ -195,14 +172,13 @@ udir_any_healthy(struct vmod_unidirectors_director *vd, const struct busyobj *bo
 	double c;
 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	CHECK_OBJ_ORNULL(bo, BUSYOBJ_MAGIC);
 	udir_rdlock(vd);
 	if (changed != NULL)
 		*changed = 0;
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		retval = be->healthy(be, bo, &c);
+		retval = VRT_Healthy(ctx, be, &c);
 		if (changed != NULL && c > *changed)
 			*changed = c;
 		if (retval)
@@ -213,8 +189,7 @@ udir_any_healthy(struct vmod_unidirectors_director *vd, const struct busyobj *bo
 }
 
 VCL_BACKEND
-udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
-	     struct busyobj *bo)
+udir_pick_be(VRT_CTX, struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx)
 {
 	unsigned u, h, n_backend = 0;
 	double a, tw = 0.0;
@@ -224,7 +199,7 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->healthy(be, bo, NULL)) {
+		if (VRT_Healthy(ctx, be, NULL)) {
 			be_idx[n_backend++] = u;
 			tw += vd->weight[u];
 		}
@@ -248,7 +223,7 @@ udir_pick_be(struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx,
 }
 
 VCL_BACKEND v_matchproto_(vdi_find_f)
-udir_vdi_find(const struct director *dir, const struct suckaddr *sa,
+udir_vdi_find(VCL_BACKEND dir, const struct suckaddr *sa,
 	      int (*cmp)(const struct suckaddr *, const struct suckaddr *))
 {
         unsigned u;
@@ -260,16 +235,15 @@ udir_vdi_find(const struct director *dir, const struct suckaddr *sa,
 	for (u = 0; u < vd->n_backend && rbe == NULL; u++) {
 	        be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (be->find)
-		        rbe = be->find(be, sa, cmp);
+		if (be->vdir->methods->find)
+		        rbe = be->vdir->methods->find(be, sa, cmp);
 	}
 	udir_unlock(vd);
 	return (rbe);
 }
 
 unsigned v_matchproto_(vdi_uptime_f)
-udir_vdi_uptime(const struct director *dir, const struct busyobj *bo,
-	       double *changed, double *load)
+udir_vdi_uptime(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed, double *load)
 {
 	unsigned u;
 	double sum = 0.0, tw = 0.0;
@@ -278,24 +252,25 @@ udir_vdi_uptime(const struct director *dir, const struct busyobj *bo,
 	VCL_BACKEND be = NULL;
 	unsigned retval = 0;
 
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	udir_rdlock(vd);
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
 		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		AN(be->uptime);
-		if (be->uptime(be, bo, &c, &l)) {
+		AN(be->vdir->methods->uptime);
+		if (be->vdir->methods->uptime(ctx, be, &c, &l)) {
 			retval = 1;
 			sum += c * vd->weight[u];
 			tw += vd->weight[u];
 			tl += l;
 		}
 	}
+	udir_unlock(vd);
 	if (changed != NULL)
 		*changed = (tw > 0.0 ? sum / tw : 0);
 	if (load != NULL)
 		*load = tl;
-	udir_unlock(vd);
 	return (retval);
 }
 
