@@ -46,14 +46,14 @@ struct vmod_director_leastconn {
 	unsigned				slow_start;
 };
 
-static void v_matchproto_(udir_fini_f)
-vmod_lc_fini(void **ppriv)
+static void v_matchproto_(vdi_destroy_f)
+lc_vdi_destroy(VCL_BACKEND dir)
 {
+	struct vmod_unidirectors_director *vd;
 	struct vmod_director_leastconn *lc;
-	AN(ppriv);
-	lc = *ppriv;
-	*ppriv = NULL;
-	CHECK_OBJ_NOTNULL(lc, VMOD_DIRECTOR_LEASTCONN_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(lc, vd->priv, VMOD_DIRECTOR_LEASTCONN_MAGIC);
 	FREE_OBJ(lc);
 }
 
@@ -100,6 +100,7 @@ static const struct vdi_methods lc_methods[1] = {{
 	.resolve =		lc_vdi_resolve,
 	.find =			udir_vdi_find,
 	.uptime =		udir_vdi_uptime,
+	.destroy =		lc_vdi_destroy,
 }};
 
 VCL_VOID v_matchproto_()
@@ -118,7 +119,6 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 	AN(vd->priv);
 	lc->slow_start = slow_start;
 
-	vd->fini = vmod_lc_fini;
 	vd->dir = VRT_AddDirector(ctx, lc_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);

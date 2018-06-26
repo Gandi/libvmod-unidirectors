@@ -49,14 +49,14 @@ struct vmod_director_round_robin {
 	double				        w;
 };
 
-static void v_matchproto_(udir_fini_f)
-vmod_rr_fini(void **ppriv)
+static void v_matchproto_(vdi_destroy_f)
+rr_vdi_destroy(VCL_BACKEND dir)
 {
+	struct vmod_unidirectors_director *vd;
         struct vmod_director_round_robin *rr;
-	AN(ppriv);
-	rr = *ppriv;
-	*ppriv = NULL;
-	CHECK_OBJ_NOTNULL(rr, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_ROUND_ROBIN_MAGIC);
 	AZ(pthread_mutex_destroy(&rr->mtx));
 	FREE_OBJ(rr);
 }
@@ -117,6 +117,7 @@ static const struct vdi_methods rr_methods[1] = {{
 	.resolve =		rr_vdi_resolve,
 	.find =			udir_vdi_find,
 	.uptime =		udir_vdi_uptime,
+	.destroy =		rr_vdi_destroy,
 }};
 
 VCL_VOID v_matchproto_()
@@ -135,7 +136,6 @@ vmod_director_round_robin(VRT_CTX, struct vmod_unidirectors_director *vd)
 	AN(vd->priv);
 	AZ(pthread_mutex_init(&rr->mtx, NULL));
 
-	vd->fini = vmod_rr_fini;
 	vd->dir = VRT_AddDirector(ctx, rr_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);

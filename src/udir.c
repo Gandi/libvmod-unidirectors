@@ -78,17 +78,12 @@ udir_delete(struct vmod_unidirectors_director **vdp)
 	*vdp = NULL;
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
-	if (vd->fini) {
-	        vd->fini(&vd->priv);
-		vd->fini = NULL;
-	}
-	AZ(vd->priv);
+	if (vd->dir)
+	        VRT_DelDirector(&vd->dir);
 
 	free(vd->backend);
 	free(vd->weight);
 	AZ(pthread_rwlock_destroy(&vd->mtx));
-	if (vd->dir)
-	        VRT_DelDirector(&vd->dir);
 	FREE_OBJ(vd);
 }
 

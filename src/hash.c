@@ -106,14 +106,14 @@ MurmurHash3_32(const void *key, int len, uint32_t seed)
 }
 /* MurmurHash3_32 */
 
-static void v_matchproto_(udir_fini_f)
-vmod_hash_fini(void **ppriv)
+static void v_matchproto_(vdi_destroy_f)
+hash_vdi_destroy(VCL_BACKEND dir)
 {
-        struct vmod_director_hash *rr;
-	AN(ppriv);
-	rr = *ppriv;
-	*ppriv = NULL;
-	CHECK_OBJ_NOTNULL(rr, VMOD_DIRECTOR_HASH_MAGIC);
+	struct vmod_unidirectors_director *vd;
+	struct vmod_director_hash *rr;
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
 	FREE_OBJ(rr);
 }
 
@@ -158,6 +158,7 @@ static const struct vdi_methods hash_methods[1] = {{
 	.resolve =		hash_vdi_resolve,
 	.find =			udir_vdi_find,
 	.uptime =		udir_vdi_uptime,
+	.destroy =		hash_vdi_destroy,
 }};
 
 VCL_VOID v_matchproto_()
@@ -190,7 +191,6 @@ vmod_director_hash(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_STRING hd
 		*p++ = ':';
 	}
 
-	vd->fini = vmod_hash_fini;
 	vd->dir = VRT_AddDirector(ctx, hash_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);

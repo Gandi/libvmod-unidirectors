@@ -49,14 +49,14 @@ struct vmod_director_fallback {
 	VCL_BACKEND			be;
 };
 
-static void v_matchproto_(udir_fini_f)
-vmod_fb_fini(void **ppriv)
+static void v_matchproto_(vdi_destroy_f)
+fb_vdi_destroy(VCL_BACKEND dir)
 {
+	struct vmod_unidirectors_director *vd;
 	struct vmod_director_fallback *fb;
-	AN(ppriv);
-	fb = *ppriv;
-	*ppriv = NULL;
-	CHECK_OBJ_NOTNULL(fb, VMOD_DIRECTOR_FALLBACK_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	FREE_OBJ(fb);
 }
 
@@ -138,6 +138,7 @@ static const struct vdi_methods fallback_methods[1] = {{
 	.resolve =		fallback_vdi_resolve,
 	.find =			udir_vdi_find,
 	.uptime =		fallback_vdi_uptime,
+	.destroy =		fb_vdi_destroy,
 }};
 
 VCL_VOID v_matchproto_()
@@ -156,7 +157,7 @@ vmod_director_fallback(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BOOL 
 	AN(vd->priv);
 	fb->sticky = sticky;
 	fb->be = NULL;
-	vd->fini = vmod_fb_fini;
+
 	vd->dir = VRT_AddDirector(ctx, fallback_methods, vd, "%s", vd->vcl_name);
 
 	udir_unlock(vd);

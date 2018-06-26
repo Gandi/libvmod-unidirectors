@@ -31,8 +31,6 @@
  * SUCH DAMAGE.
  */
 
-typedef void udir_fini_f(void **);
-
 /* number of backend per director limit to 256 per default */
 typedef uint8_t be_idx_t;
 #define UDIR_MAX_BACKEND (1 << sizeof(be_idx_t) * 8)
@@ -48,7 +46,6 @@ struct vmod_unidirectors_director {
 	const char				*vcl_name;
 	VCL_BACKEND				dir;
 
-        udir_fini_f				*fini;
         void					*priv;
 };
 
