@@ -686,11 +686,7 @@ vmod_dyndirector__fini(struct vmod_unidirectors_dyndirector **dynp)
 	struct backend_ip *b, *b2;
 	struct vmod_unidirectors_dyndirector *dyn;
 
-	AN(dynp);
-	dyn = *dynp;
-	*dynp = NULL;
-
-	CHECK_OBJ_NOTNULL(dyn, VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC);
+	TAKE_OBJ_NOTNULL(dyn, dynp, VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC);
 
 	VTAILQ_FOREACH_SAFE(b, &dyn->backends, list, b2) {
 		VTAILQ_REMOVE(&dyn->backends, b, list);

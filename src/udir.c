@@ -73,10 +73,7 @@ udir_delete(struct vmod_unidirectors_director **vdp)
 {
 	struct vmod_unidirectors_director *vd;
 
-	AN(vdp);
-	vd = *vdp;
-	*vdp = NULL;
-	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	TAKE_OBJ_NOTNULL(vd, vdp, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	if (vd->dir)
 	        VRT_DelDirector(&vd->dir);
