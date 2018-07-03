@@ -111,8 +111,11 @@ vmod_director_leastconn(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
+	if (vd->dir) {
+		VRT_fail(ctx, "%s: LB method is already set", vd->vcl_name);
+		return;
+	}
 	udir_wrlock(vd);
-	AZ(vd->dir);
 
 	ALLOC_OBJ(lc, VMOD_DIRECTOR_LEASTCONN_MAGIC);
 	vd->priv = lc;
