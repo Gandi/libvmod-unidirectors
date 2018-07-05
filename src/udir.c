@@ -106,34 +106,44 @@ udir_unlock(struct vmod_unidirectors_director *vd)
 }
 
 unsigned
-_udir_add_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight)
+_udir_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd,
+		  VCL_BACKEND be, double weight)
 {
 	unsigned u;
 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	if (be == NULL)
+	if (be == NULL) {
+		VRT_fail(ctx, "%s: NULL backend cannot be added",
+			 vd->vcl_name);
 		return (0);
-	CHECK_OBJ(be, DIRECTOR_MAGIC);
-	if (vd->n_backend < UDIR_MAX_BACKEND) {
-		if (vd->n_backend >= vd->l_backend)
-			udir_expand(vd, vd->l_backend + 16);
-		assert(vd->n_backend < vd->l_backend);
-		u = vd->n_backend++;
-		vd->backend[u] = be;
-		vd->weight[u] = weight;
-		return (1);
 	}
-	return (0);
+	CHECK_OBJ(be, DIRECTOR_MAGIC);
+	if (vd->n_backend >= UDIR_MAX_BACKEND) {
+		VRT_fail(ctx, "%s: backend cannot be added (max %d)",
+			 vd->vcl_name, UDIR_MAX_BACKEND);
+		return (0);
+	}
+	if (vd->n_backend >= vd->l_backend)
+		udir_expand(vd, vd->l_backend + 16);
+	assert(vd->n_backend < vd->l_backend);
+	u = vd->n_backend++;
+	vd->backend[u] = be;
+	vd->weight[u] = weight;
+	return (1);
 }
 
 unsigned
-_udir_remove_backend(struct vmod_unidirectors_director *vd, VCL_BACKEND be)
+_udir_remove_backend(VRT_CTX, struct vmod_unidirectors_director *vd,
+		     VCL_BACKEND be)
 {
 	unsigned u, n;
 
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	if (be == NULL)
+	if (be == NULL) {
+		VRT_fail(ctx, "%s: NULL backend cannot be removed",
+			 vd->vcl_name);
 		return (0);
+	}
 	CHECK_OBJ(be, DIRECTOR_MAGIC);
 	for (u = 0; u < vd->n_backend; u++)
 		if (vd->backend[u] == be)
@@ -284,7 +294,7 @@ vmod_director_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BA
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	udir_wrlock(vd);
-	(void)_udir_add_backend(vd, be, w);
+	(void)_udir_add_backend(ctx, vd, be, w);
 	udir_unlock(vd);
 }
 
@@ -293,7 +303,7 @@ vmod_director_remove_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL
 {
         CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	udir_wrlock(vd);
-	(void)_udir_remove_backend(vd, be);
+	(void)_udir_remove_backend(ctx, vd, be);
 	udir_unlock(vd);
 }
 

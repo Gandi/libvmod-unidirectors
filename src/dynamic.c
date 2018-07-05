@@ -226,9 +226,9 @@ dynamic_update(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_ACL acl,
 	udir_wrlock(vd);
 	VTAILQ_FOREACH_SAFE(b, &dyn->backends, list, b2)
 		if (b->mark != dyn->mark)
-			_udir_remove_backend(vd, b->be);
+			_udir_remove_backend(ctx, vd, b->be);
 		else if (!b->updated)
-			b->updated = _udir_add_backend(vd, b->be, 1);
+			b->updated = _udir_add_backend(ctx, vd, b->be, 1);
 	udir_unlock(vd);
 
 	VTAILQ_FOREACH_SAFE(b, &dyn->backends, list, b2)
@@ -503,7 +503,7 @@ vmod_dyndirector_add_IP(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 			b = dynamic_add_addr(ctx, dyn, NULL, addr);
 			if (b) {
 				udir_wrlock(vd);
-				b->updated = _udir_add_backend(vd, b->be, w);
+				b->updated = _udir_add_backend(ctx, vd, b->be, w);
 				udir_unlock(vd);
 			}
 			AZ(pthread_mutex_unlock(&dyn->mtx));
@@ -553,7 +553,7 @@ vmod_dyndirector_remove_IP(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn,
 				if (!VSA_Compare(b->ip_suckaddr, sa)) {
 					VTAILQ_REMOVE(&dyn->backends, b, list);
 					udir_wrlock(vd);
-					_udir_remove_backend(vd, b->be);
+					_udir_remove_backend(ctx, vd, b->be);
 					udir_unlock(vd);
 					DBG(ctx, dyn, "remove-backend %s", b->vcl_name);
 					backend_fini(ctx, b);
