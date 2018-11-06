@@ -131,7 +131,7 @@ Description
 	Configure a director as hash.
 
 	The director chooses the backend server by computing a hash/digest
-	of the http header in param.
+	of the http header in param or the bereq.url if no http header is found.
 
 	Commonly used with ``client.ip`` or a session cookie to get
 	sticky sessions.

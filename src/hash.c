@@ -125,7 +125,7 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	struct vmod_director_hash *rr;
 	const char *p;
 	VCL_BACKEND be = NULL;
-	double r = 0.0;
+	double r;
 	be_idx_t *be_idx;
 
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
@@ -137,10 +137,12 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 
 	udir_rdlock(vd);
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
-	if (http_GetHdr(ctx->bo->bereq, rr->hdr, &p)) {
-		r = MurmurHash3_32(p, strlen(p), 0);
-		r = scalbn(r, -32);
+	if (!rr->hdr || !http_GetHdr(ctx->bo->bereq, rr->hdr, &p)) {
+		AN(ctx->http_bereq);
+		p = ctx->http_bereq->hd[HTTP_HDR_URL].b;
 	}
+	r = MurmurHash3_32(p, strlen(p), 0);
+	r = scalbn(r, -32);
 	assert(r >= 0 && r <= 1.0);
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
 		be_idx = (void*)wrk->aws->f;
