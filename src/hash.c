@@ -114,6 +114,7 @@ hash_vdi_destroy(VCL_BACKEND dir)
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(rr, vd->priv, VMOD_DIRECTOR_HASH_MAGIC);
+	free(rr->hdr);
 	FREE_OBJ(rr);
 }
 
