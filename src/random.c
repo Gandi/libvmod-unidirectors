@@ -49,8 +49,9 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	struct worker *wrk;
 	struct vmod_unidirectors_director *vd;
 	VCL_BACKEND be = NULL;
-	double r;
 	be_idx_t *be_idx;
+	unsigned u, h, n_backend = 0;
+	double r, a, tw = 0.0;
 
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
 	wrk = ctx->bo->wrk;
@@ -59,11 +60,31 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
-	r = scalbn(VRND_RandomTestable(), -31);
-	assert(r >= 0 && r < 1.0);
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
 		be_idx = (void*)wrk->aws->f;
-		be = udir_pick_be(ctx, vd, r, be_idx);
+		for (u = 0; u < vd->n_backend; u++) {
+			be = vd->backend[u];
+			CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+			if (VRT_Healthy(ctx, be, NULL)) {
+				be_idx[n_backend++] = u;
+				tw += vd->weight[u];
+			}
+		}
+		be = NULL;
+		if (tw > 0.0) {
+			r = scalbn(VRND_RandomTestable(), -31);
+			r *= tw;
+			a = 0.0;
+			for (h = 0; h < n_backend; h++) {
+				u = be_idx[h];
+				assert(u < vd->n_backend);
+				a += vd->weight[u];
+				if (r < a) {
+					be = vd->backend[u];
+					break;
+				}
+			}
+		}
         }
 	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);

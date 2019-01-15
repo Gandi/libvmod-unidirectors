@@ -55,7 +55,6 @@ void udir_unlock(struct vmod_unidirectors_director*vd);
 unsigned _udir_remove_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BACKEND be);
 unsigned _udir_add_backend(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_BACKEND be, double weight);
 unsigned udir_any_healthy(VRT_CTX, struct vmod_unidirectors_director*, VCL_TIME *changed);
-VCL_BACKEND udir_pick_be(VRT_CTX, struct vmod_unidirectors_director*, double w, be_idx_t *be_idx);
 VCL_BACKEND udir_vdi_find(VCL_BACKEND, const struct suckaddr *sa,
 			  int (*cmp)(const struct suckaddr *, const struct suckaddr *));
 unsigned udir_vdi_uptime(VRT_CTX, VCL_BACKEND, VCL_TIME *changed, double *load);

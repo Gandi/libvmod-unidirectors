@@ -190,40 +190,6 @@ udir_any_healthy(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_TIME *chang
 	return (retval);
 }
 
-VCL_BACKEND
-udir_pick_be(VRT_CTX, struct vmod_unidirectors_director *vd, double w, be_idx_t *be_idx)
-{
-	unsigned u, h, n_backend = 0;
-	double a, tw = 0.0;
-	VCL_BACKEND be;
-
-	AN(be_idx);
-	for (u = 0; u < vd->n_backend; u++) {
-		be = vd->backend[u];
-		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-		if (VRT_Healthy(ctx, be, NULL)) {
-			be_idx[n_backend++] = u;
-			tw += vd->weight[u];
-		}
-	}
-	be = NULL;
-	if (tw > 0.0) {
-		w *= tw;
-		a = 0.0;
-		for (h = 0; h < n_backend; h++) {
-			u = be_idx[h];
-			assert(u < vd->n_backend);
-			a += vd->weight[u];
-			if (w < a) {
-				be = vd->backend[u];
-				CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-				break;
-			}
-		}
-	}
-	return (be);
-}
-
 VCL_BACKEND v_matchproto_(vdi_find_f)
 udir_vdi_find(VCL_BACKEND dir, const struct suckaddr *sa,
 	      int (*cmp)(const struct suckaddr *, const struct suckaddr *))
