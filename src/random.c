@@ -35,6 +35,7 @@
 
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "cache/cache.h"
 #include "cache/cache_director.h"
@@ -44,17 +45,35 @@
 #include "udir.h"
 #include "dynamic.h"
 
+struct vmod_director_random {
+	unsigned				magic;
+#define VMOD_DIRECTOR_RANDOM_MAGIC              0x5b02c294
+	int				        choices;
+};
+
+static void v_matchproto_(vdi_destroy_f)
+random_vdi_destroy(VCL_BACKEND dir)
+{
+	struct vmod_unidirectors_director *vd;
+	struct vmod_director_random *rand;
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(rand, vd->priv, VMOD_DIRECTOR_RANDOM_MAGIC);
+	FREE_OBJ(rand);
+}
+
 static VCL_BACKEND v_matchproto_(vdi_resolve_f)
 random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
 	struct worker *wrk;
 	struct vmod_unidirectors_director *vd;
+	struct vmod_director_random *rand;
 	VCL_BACKEND be, rbe = NULL;
 	be_idx_t *be_idx;
 	unsigned u, h, n_backend = 0;
 	double r, a, tw = 0.0;
 	double load, rload = INFINITY;
-	int choices = 2; // XXX
+	int choices;
 
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
 	wrk = ctx->bo->wrk;
@@ -63,6 +82,8 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
+	CAST_OBJ_NOTNULL(rand, vd->priv, VMOD_DIRECTOR_RANDOM_MAGIC);
+	choices = rand->choices;
 	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
 		be_idx = (void*)wrk->aws->f;
 		for (u = 0; u < vd->n_backend; u++) {
@@ -115,11 +136,14 @@ static const struct vdi_methods random_methods[1] = {{
 	.resolve =		random_vdi_resolve,
 	.find =			udir_vdi_find,
 	.uptime =		udir_vdi_uptime,
+	.destroy =              random_vdi_destroy,
 }};
 
 VCL_VOID v_matchproto_()
-vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
+vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_INT choices)
 {
+	struct vmod_director_random *rand;
+
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
@@ -128,14 +152,21 @@ vmod_director_random(VRT_CTX, struct vmod_unidirectors_director *vd)
 		return;
 	}
 	udir_wrlock(vd);
+
+	ALLOC_OBJ(rand, VMOD_DIRECTOR_RANDOM_MAGIC);
+	vd->priv = rand;
+	AN(vd->priv);
+	rand->choices = choices;
+
 	vd->dir = VRT_AddDirector(ctx, random_methods, vd, "%s", vd->vcl_name);
+
 	udir_unlock(vd);
 }
 
 VCL_VOID v_matchproto_()
-vmod_dyndirector_random(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn)
+vmod_dyndirector_random(VRT_CTX, struct vmod_unidirectors_dyndirector *dyn, VCL_INT choices)
 {
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(dyn, VMOD_UNIDIRECTORS_DYNDIRECTOR_MAGIC);
-	vmod_director_random(ctx, dyn->vd);
+	vmod_director_random(ctx, dyn->vd, choices);
 }
