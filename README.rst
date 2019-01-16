@@ -6,9 +6,6 @@ vmod_unidirectors
 Varnish Directors Module
 ----------------------
 
-:Date: 2017-03-10
-:Version: 2.0.0
-
 SYNOPSIS
 ========
 
@@ -55,33 +52,6 @@ add more backends to a director when a certain URL is called.
 
 CONTENTS
 ========
-
-* :ref:`func_backend_type`
-* :ref:`obj_director`
-* :ref:`func_director.add_backend`
-* :ref:`func_director.backend`
-* :ref:`func_director.fallback`
-* :ref:`func_director.hash`
-* :ref:`func_director.leastconn`
-* :ref:`func_director.random`
-* :ref:`func_director.remove_backend`
-* :ref:`func_director.round_robin`
-* :ref:`obj_dyndirector`
-* :ref:`func_dyndirector.add_IP`
-* :ref:`func_dyndirector.add_backend`
-* :ref:`func_dyndirector.backend`
-* :ref:`func_dyndirector.debug`
-* :ref:`func_dyndirector.fallback`
-* :ref:`func_dyndirector.hash`
-* :ref:`func_dyndirector.leastconn`
-* :ref:`func_dyndirector.lookup_addr`
-* :ref:`func_dyndirector.random`
-* :ref:`func_dyndirector.remove_IP`
-* :ref:`func_dyndirector.remove_backend`
-* :ref:`func_dyndirector.round_robin`
-* :ref:`func_dyndirector.update_IPs`
-* :ref:`func_find_backend`
-* :ref:`func_is_backend`
 
 .. _obj_director:
 
@@ -144,13 +114,19 @@ director.random
 
 ::
 
-	VOID director.random()
+	VOID director.random(INT  choices=2)
 
 Description
-	Configure a director as random.
+	Configure a director as power of two random choices.
 
-	The random director distributes load over the backends using
-	a weighted random probability distribution.
+	The director chooses the less busy backend server between two backend
+	selected with weighted random algorithm. The choices is 2 per default
+	and can be changes. With choices < 2, algorithm is a weighted random
+	distribution.
+	This director with default value generally shows very good distribution,
+	it should be privileged over leastconn and round_robin director.
+
+	WARNING: need unidirectors patch for Varnish (for vdi_uptime_f)
 
 Example
 	udir.random();
@@ -168,7 +144,7 @@ Description
 	Configure a director as hash.
 
 	The director chooses the backend server by computing a hash/digest
-	of the http header in param.
+	of the http header in param or the bereq.url if no http header is found.
 
 	Commonly used with ``client.ip`` or a session cookie to get
 	sticky sessions.
@@ -264,6 +240,23 @@ Description
 Example
 	new udir = unidirectors.dyndirector()
 
+.. _func_dynamics_number_expected:
+
+dynamics_number_expected(INT n)
+------------------------------------
+
+::
+
+	VOID dynamics_number_expected(INT n)
+
+Description
+	Call this one to collapse VSC of next n dynamic backends. This will
+	speedup vcl.load and VSC access. It can be necessary when a lot of
+	dynamic backends are set in vcl_init to avoid vcl.load failing.
+
+Example
+	unidirectors.dynamics_number_expected(10000)
+
 .. _func_dyndirector.round_robin:
 
 dyndirector.round_robin
@@ -299,7 +292,7 @@ dyndirector.random
 
 ::
 
-	VOID dyndirector.random()
+	VOID dyndirector.random(INT choices=2)
 
 Description
 	Configure a dynamic director as random.
