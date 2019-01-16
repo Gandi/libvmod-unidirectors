@@ -4,7 +4,7 @@
  *
  * Author: Poul-Henning Kamp <phk@FreeBSD.org>
  *
- * Copyright (c) 2016-2018 GANDI SAS
+ * Copyright (c) 2016-2019 GANDI SAS
  * All rights reserved.
  *
  * Author: Emmanuel Hocdet <manu@gandi.net>
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 
 #include "cache/cache.h"
+#include "cache/cache_director.h"
 
 #include "vrnd.h"
 
@@ -48,10 +49,12 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
 	struct worker *wrk;
 	struct vmod_unidirectors_director *vd;
-	VCL_BACKEND be = NULL;
+	VCL_BACKEND be, rbe = NULL;
 	be_idx_t *be_idx;
 	unsigned u, h, n_backend = 0;
 	double r, a, tw = 0.0;
+	double load, rload = INFINITY;
+	int choices = 2; // XXX
 
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
 	wrk = ctx->bo->wrk;
@@ -70,25 +73,39 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 				tw += vd->weight[u];
 			}
 		}
-		be = NULL;
-		if (tw > 0.0) {
-			r = scalbn(VRND_RandomTestable(), -31);
-			r *= tw;
-			a = 0.0;
-			for (h = 0; h < n_backend; h++) {
-				u = be_idx[h];
-				assert(u < vd->n_backend);
-				a += vd->weight[u];
-				if (r < a) {
-					be = vd->backend[u];
-					break;
+		if (tw > 0.0)
+			do {
+				be = NULL;
+				r = scalbn(VRND_RandomTestable(), -31);
+				r *= tw;
+				a = 0.0;
+				for (h = 0; h < n_backend; h++) {
+					u = be_idx[h];
+					assert(u < vd->n_backend);
+					a += vd->weight[u];
+					if (r < a) {
+						be = vd->backend[u];
+						CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+						break;
+					}
 				}
-			}
-		}
+				if (!be)
+					break;
+				if (be != rbe) {
+					if (be->vdir->methods->uptime(ctx, be, NULL, &load)) {
+						load = load / vd->weight[u];
+						if (load < rload) {
+							rbe = be;
+							rload = load;
+						}
+					} else if (!rbe)
+						rbe = be;
+				}
+			} while (--choices > 0);
         }
 	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
-	return (be);
+	return (rbe);
 }
 
 static const struct vdi_methods random_methods[1] = {{

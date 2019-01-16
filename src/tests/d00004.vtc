@@ -5,6 +5,8 @@ server s1 {
 	txresp -body "1"
 	rxreq
 	txresp -body "1"
+	rxreq
+	txresp -body "1"
 } -start
 
 server s2 {
@@ -61,19 +63,13 @@ client c1 {
 	expect resp.bodylen == 3
 	txreq
 	rxresp
-	expect resp.bodylen == 4
-	txreq
-	rxresp
-	expect resp.bodylen == 1
-	txreq
-	rxresp
 	expect resp.bodylen == 1
 	txreq
 	rxresp
 	expect resp.bodylen == 2
 	txreq
 	rxresp
-	expect resp.bodylen == 2
+	expect resp.bodylen == 3
 	txreq
 	rxresp
 	expect resp.bodylen == 3
@@ -82,8 +78,17 @@ client c1 {
 	expect resp.bodylen == 4
 	txreq
 	rxresp
-	expect resp.bodylen == 3
+	expect resp.bodylen == 1
+	txreq
+	rxresp
+	expect resp.bodylen == 4
+	txreq
+	rxresp
+	expect resp.bodylen == 1
 	txreq
 	rxresp
 	expect resp.bodylen == 3
+	txreq
+	rxresp
+	expect resp.bodylen == 2
 } -run
