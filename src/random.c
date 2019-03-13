@@ -94,36 +94,36 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 				tw += vd->weight[u];
 			}
 		}
-		if (tw > 0.0)
-			do {
-				be = NULL;
-				r = scalbn(VRND_RandomTestable(), -31);
-				r *= tw;
-				a = 0.0;
-				for (h = 0; h < n_backend; h++) {
-					u = be_idx[h];
-					assert(u < vd->n_backend);
-					a += vd->weight[u];
-					if (r < a) {
-						be = vd->backend[u];
-						CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
-						break;
-					}
-				}
-				if (!be)
+	}
+	if (tw > 0.0)
+		do {
+			be = NULL;
+			r = scalbn(VRND_RandomTestable(), -31);
+			r *= tw;
+			a = 0.0;
+			for (h = 0; h < n_backend; h++) {
+				u = be_idx[h];
+				assert(u < vd->n_backend);
+				a += vd->weight[u];
+				if (r < a) {
+					be = vd->backend[u];
+					CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
 					break;
-				if (be != rbe) {
-					if (be->vdir->methods->uptime(ctx, be, NULL, &load)) {
-						load = load / vd->weight[u];
-						if (load < rload) {
-							rbe = be;
-							rload = load;
-						}
-					} else if (!rbe)
-						rbe = be;
 				}
-			} while (--choices > 0);
-        }
+			}
+			if (!be)
+				break;
+			if (be != rbe) {
+				if (be->vdir->methods->uptime(ctx, be, NULL, &load)) {
+					load = load / vd->weight[u];
+					if (load < rload) {
+						rbe = be;
+						rload = load;
+					}
+				} else if (!rbe)
+					rbe = be;
+			}
+		} while (--choices > 0);
 	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
 	return (rbe);

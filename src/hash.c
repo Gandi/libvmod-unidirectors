@@ -125,7 +125,7 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
         struct vmod_unidirectors_director *vd;
 	struct vmod_director_hash *rr;
 	const char *p;
-	VCL_BACKEND be = NULL;
+	VCL_BACKEND be, rbe = NULL;
 	be_idx_t *be_idx;
 	unsigned u, h, n_backend = 0;
 	double r, a, tw = 0.0;
@@ -155,24 +155,23 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 				tw += vd->weight[u];
 			}
 		}
-		be = NULL;
-		if (tw > 0.0) {
-			r *= tw;
-			a = 0.0;
-			for (h = 0; h < n_backend; h++) {
-				u = be_idx[h];
-				assert(u < vd->n_backend);
-				a += vd->weight[u];
-				if (r < a) {
-					be = vd->backend[u];
-					break;
-				}
+	}
+	if (tw > 0.0) {
+		r *= tw;
+		a = 0.0;
+		for (h = 0; h < n_backend; h++) {
+			u = be_idx[h];
+			assert(u < vd->n_backend);
+			a += vd->weight[u];
+			if (r < a) {
+				rbe = vd->backend[u];
+				break;
 			}
 		}
 	}
 	WS_Release(wrk->aws, 0);
 	udir_unlock(vd);
-	return (be);
+	return (rbe);
 }
 
 static const struct vdi_methods hash_methods[1] = {{
