@@ -360,7 +360,7 @@ struct dyn_vsc {
 };
 
 int v_matchproto_(vmod_event_f)
-vmod_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
+vmod_dyndirector_event(VRT_CTX, struct vmod_priv *priv, enum vcl_event_e e)
 {
 	struct dynamic_lookup *dns, *dns2;
 	struct dynamic_backend_vsc *c, *c2;
