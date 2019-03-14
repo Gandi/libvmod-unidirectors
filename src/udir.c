@@ -160,23 +160,19 @@ _udir_remove_backend(VRT_CTX, struct vmod_unidirectors_director *vd,
 	return (1);
 }
 
-unsigned v_matchproto_(vdi_healthy_f)
+VCL_BOOL v_matchproto_(vdi_healthy_f)
 udir_vdi_healthy(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed)
 {
-        struct vmod_unidirectors_director *vd;
-	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
-	return (udir_any_healthy(ctx, vd, changed));
-}
-
-unsigned
-udir_any_healthy(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_TIME *changed)
-{
+	struct vmod_unidirectors_director *vd;
 	unsigned retval = 0;
 	VCL_BACKEND be;
 	unsigned u;
 	double c;
 
-	CHECK_OBJ_NOTNULL(vd, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
 	udir_rdlock(vd);
 	if (changed != NULL)
 		*changed = 0;
@@ -302,7 +298,7 @@ udir_vdi_find(VCL_BACKEND dir, const struct suckaddr *sa,
 	return (rbe);
 }
 
-unsigned v_matchproto_(vdi_uptime_f)
+VCL_BOOL v_matchproto_(vdi_uptime_f)
 udir_vdi_uptime(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed, double *load)
 {
 	unsigned u;
@@ -312,8 +308,10 @@ udir_vdi_uptime(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed, double *load)
 	VCL_BACKEND be = NULL;
 	unsigned retval = 0;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
 	udir_rdlock(vd);
 	for (u = 0; u < vd->n_backend; u++) {
 		be = vd->backend[u];
