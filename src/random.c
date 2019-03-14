@@ -137,6 +137,7 @@ static const struct vdi_methods random_methods[1] = {{
 	.find =			udir_vdi_find,
 	.uptime =		udir_vdi_uptime,
 	.destroy =              random_vdi_destroy,
+	.list =                 udir_vdi_list,
 }};
 
 VCL_VOID v_matchproto_()

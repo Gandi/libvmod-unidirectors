@@ -39,6 +39,8 @@
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
+#include "vsb.h"
+
 #include "udir.h"
 #include "dynamic.h"
 
@@ -130,6 +132,91 @@ fallback_vdi_uptime(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed, double *load)
 	return (retval);
 }
 
+static void v_matchproto_(vdi_list_f)
+fb_vdi_list(VRT_CTX, VCL_BACKEND dir, struct vsb *vsb, int pflag, int jflag)
+{
+	struct vmod_unidirectors_director *vd;
+	struct vmod_director_fallback *fb;
+	VCL_BACKEND be, cbe;
+	VCL_BOOL h;
+	unsigned u, nh = 0;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
+	udir_rdlock(vd);
+	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
+	if (pflag) {
+		if (jflag) {
+			VSB_cat(vsb, "{\n");
+			VSB_indent(vsb, 2);
+			VSB_printf(vsb, "\"sticky\": %s,\n",
+				   fb->sticky ? "true" : "false");
+			VSB_cat(vsb, "\"backends\": {\n");
+			VSB_indent(vsb, 2);
+		} else {
+			VSB_cat(vsb, "\n\n\tBackend\tCurrent\tHealth\n");
+		}
+	}
+	cbe = fb->be;
+	for (u = 0; u < vd->n_backend; u++) {
+		be = vd->backend[u];
+		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+
+		h = VRT_Healthy(ctx, vd->backend[u], NULL);
+		if (h)
+			nh++;
+		if (!pflag)
+			continue;
+		if (jflag) {
+			if (u)
+				VSB_cat(vsb, ",\n");
+			VSB_printf(vsb, "\"%s\": {\n", be->vcl_name);
+			VSB_indent(vsb, 2);
+			if (cbe == be)
+				VSB_cat(vsb, "\"current\": true,\n");
+			else
+				VSB_cat(vsb, "\"current\": false,\n");
+
+			if (h)
+				VSB_cat(vsb, "\"health\": \"healthy\"\n");
+			else
+				VSB_cat(vsb, "\"health\": \"sick\"\n");
+
+			VSB_indent(vsb, -2);
+			VSB_cat(vsb, "}");
+		} else {
+			VSB_cat(vsb, "\t");
+			VSB_cat(vsb, be->vcl_name);
+			if (cbe == be)
+				VSB_cat(vsb, "\t*\t");
+			else
+				VSB_cat(vsb, "\t\t");
+			VSB_cat(vsb, h ? "healthy" : "sick");
+			VSB_cat(vsb, "\n");
+		}
+	}
+	u = vd->n_backend;
+	udir_unlock(vd);
+
+	if (jflag && (pflag)) {
+		VSB_cat(vsb, "\n");
+		VSB_indent(vsb, -2);
+		VSB_cat(vsb, "}\n");
+		VSB_indent(vsb, -2);
+		VSB_cat(vsb, "},\n");
+	}
+
+	if (pflag)
+		return;
+
+	if (jflag)
+		VSB_printf(vsb, "[%u, %u, \"%s\"]", nh, u,
+		    nh ? "healthy" : "sick");
+	else
+		VSB_printf(vsb, "%u/%u\t%s", nh, u, nh ? "healthy" : "sick");
+}
 
 static const struct vdi_methods fallback_methods[1] = {{
 	.magic =		VDI_METHODS_MAGIC,
@@ -139,6 +226,7 @@ static const struct vdi_methods fallback_methods[1] = {{
 	.find =			udir_vdi_find,
 	.uptime =		fallback_vdi_uptime,
 	.destroy =		fb_vdi_destroy,
+	.list =	                fb_vdi_list,
 }};
 
 VCL_VOID v_matchproto_()

@@ -59,3 +59,4 @@ VCL_BACKEND udir_vdi_find(VCL_BACKEND, const struct suckaddr *sa,
 			  int (*cmp)(const struct suckaddr *, const struct suckaddr *));
 unsigned udir_vdi_uptime(VRT_CTX, VCL_BACKEND, VCL_TIME *changed, double *load);
 unsigned udir_vdi_healthy(VRT_CTX, VCL_BACKEND, VCL_TIME *changed);
+void udir_vdi_list(VRT_CTX, VCL_BACKEND, struct vsb *vsb, int pflag, int jflag);

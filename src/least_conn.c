@@ -101,6 +101,7 @@ static const struct vdi_methods lc_methods[1] = {{
 	.find =			udir_vdi_find,
 	.uptime =		udir_vdi_uptime,
 	.destroy =		lc_vdi_destroy,
+	.list =                 udir_vdi_list,
 }};
 
 VCL_VOID v_matchproto_()

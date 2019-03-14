@@ -39,6 +39,9 @@
 #include "cache/cache.h"
 #include "cache/cache_director.h"
 
+#include "vsb.h"
+#include "vbm.h"
+
 #include "udir.h"
 
 static void
@@ -188,6 +191,95 @@ udir_any_healthy(VRT_CTX, struct vmod_unidirectors_director *vd, VCL_TIME *chang
 	}
 	udir_unlock(vd);
 	return (retval);
+}
+
+void v_matchproto_(vdi_list_f)
+udir_vdi_list(VRT_CTX, VCL_BACKEND dir, struct vsb *vsb, int pflag, int jflag)
+{
+	struct vmod_unidirectors_director *vd;
+	VCL_BACKEND be;
+	VCL_BOOL h;
+	unsigned u, nh = 0;
+	double w, tw = 0.0;
+	struct vbitmap *healthy = NULL;
+
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
+	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
+	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
+	udir_rdlock(vd);
+	if (pflag)
+		healthy = vbit_new(vd->n_backend);
+	for (u = 0; u < vd->n_backend; u++) {
+		be = vd->backend[u];
+		CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
+
+		h = VRT_Healthy(ctx, vd->backend[u], NULL);
+		if (h) {
+			nh++;
+			tw += vd->weight[u];
+			if (healthy)
+				vbit_set(healthy, u);
+		}
+	}
+	if (pflag) {
+		if (jflag) {
+			VSB_cat(vsb, "{\n");
+			VSB_indent(vsb, 2);
+			VSB_printf(vsb, "\"total_weight\": %f,\n", tw);
+			VSB_cat(vsb, "\"backends\": {\n");
+			VSB_indent(vsb, 2);
+		} else {
+			VSB_cat(vsb, "\n\n\tBackend\tWeight\tHealth\n");
+		}
+	}
+	for (u = 0; pflag && u < vd->n_backend; u++) {
+		be = vd->backend[u];
+		AN(healthy);
+		h = vbit_test(healthy, u);
+		w = h ? vd->weight[u] : 0.0;
+
+		if (jflag) {
+			if (u)
+				VSB_cat(vsb, ",\n");
+			VSB_printf(vsb, "\"%s\": {\n", be->vcl_name);
+			VSB_indent(vsb, 2);
+			VSB_printf(vsb, "\"weight\": %f,\n", w);
+			if (h)
+				VSB_cat(vsb, "\"health\": \"healthy\"\n");
+			else
+				VSB_cat(vsb, "\"health\": \"sick\"\n");
+
+			VSB_indent(vsb, -2);
+			VSB_cat(vsb, "}");
+		} else {
+			VSB_cat(vsb, "\t");
+			VSB_cat(vsb, be->vcl_name);
+			VSB_printf(vsb, "\t%6.2f%%\t", 100 * w / tw);
+			VSB_cat(vsb, h ? "healthy" : "sick");
+			VSB_cat(vsb, "\n");
+		}
+	}
+	u = vd->n_backend;
+	udir_unlock(vd);
+	vbit_destroy(healthy);
+
+	if (jflag && (pflag)) {
+		VSB_cat(vsb, "\n");
+		VSB_indent(vsb, -2);
+		VSB_cat(vsb, "}\n");
+		VSB_indent(vsb, -2);
+		VSB_cat(vsb, "},\n");
+	}
+
+	if (pflag)
+		return;
+
+	if (jflag)
+		VSB_printf(vsb, "[%u, %u, \"%s\"]", nh, u,
+		    nh ? "healthy" : "sick");
+	else
+		VSB_printf(vsb, "%u/%u\t%s", nh, u, nh ? "healthy" : "sick");
 }
 
 VCL_BACKEND v_matchproto_(vdi_find_f)

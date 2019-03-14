@@ -182,6 +182,7 @@ static const struct vdi_methods hash_methods[1] = {{
 	.find =			udir_vdi_find,
 	.uptime =		udir_vdi_uptime,
 	.destroy =		hash_vdi_destroy,
+	.list =                 udir_vdi_list,
 }};
 
 VCL_VOID v_matchproto_()
