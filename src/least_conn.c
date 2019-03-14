@@ -66,6 +66,7 @@ lc_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	double changed, now, delta_t, load, least = INFINITY;
 	VCL_BACKEND be, rbe = NULL;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 

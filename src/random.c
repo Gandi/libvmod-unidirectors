@@ -75,6 +75,7 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	double load, rload = INFINITY;
 	int choices;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
 	wrk = ctx->bo->wrk;
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);

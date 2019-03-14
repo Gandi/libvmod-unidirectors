@@ -70,8 +70,10 @@ fallback_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	unsigned u;
 	VCL_BACKEND be, rbe = NULL;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
 	udir_rdlock(vd);
 	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	if (fb->sticky) {
@@ -94,7 +96,7 @@ fallback_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	return (rbe);
 }
 
-static unsigned v_matchproto_(vdi_uptime_f)
+static VCL_BOOL v_matchproto_(vdi_uptime_f)
 fallback_vdi_uptime(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed, double *load)
 {
 	unsigned u;
@@ -104,8 +106,10 @@ fallback_vdi_uptime(VRT_CTX, VCL_BACKEND dir, VCL_TIME *changed, double *load)
 	struct vmod_director_fallback *fb;
 	VCL_BACKEND be;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
+
 	udir_rdlock(vd);
 	CAST_OBJ_NOTNULL(fb, vd->priv, VMOD_DIRECTOR_FALLBACK_MAGIC);
 	if (fb->sticky) {

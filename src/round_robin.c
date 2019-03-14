@@ -72,6 +72,7 @@ rr_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	be_idx_t *be_idx = NULL;
 	VCL_BACKEND be, rbe = NULL;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
 	wrk = ctx->bo->wrk;
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);

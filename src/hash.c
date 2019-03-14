@@ -130,6 +130,7 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	unsigned u, h, n_backend = 0;
 	double r, a, tw = 0.0;
 
+	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
 	wrk = ctx->bo->wrk;
 	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
