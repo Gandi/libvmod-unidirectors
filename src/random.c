@@ -110,8 +110,12 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 						break;
 					}
 				}
-				if (!be)
+				AN(be);
+				/* one backend or one choice */
+				if (n_backend <= 1 || rand->choices <= 1) {
+					rbe = be;
 					break;
+				}
 				if (be != rbe) {
 					if (be->vdir->methods->uptime(ctx, be, NULL, &load)) {
 						load = load / vd->weight[u];
