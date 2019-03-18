@@ -39,7 +39,7 @@ varnish v1 -vcl+backend {
 
 	sub vcl_init {
 		new foo = unidirectors.director();
-		foo.random();
+		foo.random(2);
 		foo.add_backend(s1, 1);
 		foo.add_backend(s2, 1);
 		foo.add_backend(s3, 1);

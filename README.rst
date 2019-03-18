@@ -114,17 +114,16 @@ director.random
 
 ::
 
-	VOID director.random(INT  choices=2)
+	VOID director.random(INT choices=1)
 
 Description
-	Configure a director as power of two random choices.
+	Configure a director as random.
 
-	The director chooses the less busy backend server between two backend
-	selected with weighted random algorithm. The choices is 2 per default
-	and can be changes. With choices < 2, algorithm is a weighted random
-	distribution.
-	This director with default value generally shows very good distribution,
-	it should be privileged over leastconn and round_robin director.
+	The random director distributes load over the backends using a weighted
+	random probability distribution. With choices=2, the director chooses
+	the less busy backend server between two backend selected with weighted
+	random algorithm. This algorithm is known as power of two random choices.
+	Choices.
 
 	WARNING: need unidirectors patch for Varnish (for vdi_uptime_f)
 
@@ -292,7 +291,7 @@ dyndirector.random
 
 ::
 
-	VOID dyndirector.random(INT choices=2)
+	VOID dyndirector.random(INT choices=1)
 
 Description
 	Configure a dynamic director as random.
