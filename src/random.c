@@ -65,7 +65,6 @@ random_vdi_destroy(VCL_BACKEND dir)
 static VCL_BACKEND v_matchproto_(vdi_resolve_f)
 random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
-	struct worker *wrk;
 	struct vmod_unidirectors_director *vd;
 	struct vmod_director_random *rand;
 	VCL_BACKEND be, rbe = NULL;
@@ -76,17 +75,14 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	int choices;
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
-	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
-	wrk = ctx->bo->wrk;
-	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 
 	udir_rdlock(vd);
 	CAST_OBJ_NOTNULL(rand, vd->priv, VMOD_DIRECTOR_RANDOM_MAGIC);
 	choices = rand->choices;
-	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
-		be_idx = (void*)wrk->aws->f;
+	if (WS_Reserve(ctx->ws, 0) >= vd->n_backend * sizeof(*be_idx)) {
+		be_idx = (void*)ctx->ws->f;
 		for (u = 0; u < vd->n_backend; u++) {
 			be = vd->backend[u];
 			CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
@@ -129,7 +125,7 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 					rbe = be;
 			}
 		} while (--choices > 0);
-	WS_Release(wrk->aws, 0);
+	WS_Release(ctx->ws, 0);
 	udir_unlock(vd);
 	return (rbe);
 }

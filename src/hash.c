@@ -121,7 +121,6 @@ hash_vdi_destroy(VCL_BACKEND dir)
 static VCL_BACKEND v_matchproto_(vdi_resolve_f)
 hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 {
-	struct worker *wrk;
         struct vmod_unidirectors_director *vd;
 	struct vmod_director_hash *rr;
 	const char *p;
@@ -132,8 +131,6 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 
 	CHECK_OBJ_NOTNULL(ctx, VRT_CTX_MAGIC);
 	CHECK_OBJ_NOTNULL(ctx->bo, BUSYOBJ_MAGIC);
-	wrk = ctx->bo->wrk;
-	CHECK_OBJ_NOTNULL(wrk, WORKER_MAGIC);
 	CHECK_OBJ_NOTNULL(dir, DIRECTOR_MAGIC);
 	CAST_OBJ_NOTNULL(vd, dir->priv, VMOD_UNIDIRECTORS_DIRECTOR_MAGIC);
 	AN(ctx->bo->bereq);
@@ -146,8 +143,8 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 	}
 	r = MurmurHash3_32(p, strlen(p), 0);
 	r = scalbn(r, -32);
-	if (WS_Reserve(wrk->aws, 0) >= vd->n_backend * sizeof(*be_idx)) {
-		be_idx = (void*)wrk->aws->f;
+	if (WS_Reserve(ctx->ws, 0) >= vd->n_backend * sizeof(*be_idx)) {
+		be_idx = (void*)ctx->ws->f;
 		for (u = 0; u < vd->n_backend; u++) {
 			be = vd->backend[u];
 			CHECK_OBJ_NOTNULL(be, DIRECTOR_MAGIC);
@@ -170,7 +167,7 @@ hash_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 			}
 		}
 	}
-	WS_Release(wrk->aws, 0);
+	WS_Release(ctx->ws, 0);
 	udir_unlock(vd);
 	return (rbe);
 }
