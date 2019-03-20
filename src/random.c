@@ -91,7 +91,8 @@ random_vdi_resolve(VRT_CTX, VCL_BACKEND dir)
 				tw += vd->weight[u];
 			}
 		}
-	}
+	} else
+		VRT_fail(ctx, "%s: Workspace overflow on vdi_resolve", vd->vcl_name);
 	if (tw > 0.0)
 		do {
 			be = NULL;
