@@ -3,7 +3,7 @@ vmod_unidirectors
 ============
 
 ----------------------
-Varnish Directors Module
+Varnish (Dynamic)Directors Module
 ----------------------
 
 SYNOPSIS
